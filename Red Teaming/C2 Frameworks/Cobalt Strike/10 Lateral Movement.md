@@ -11,6 +11,8 @@ _Lateral Movement_ is a tactic where the adversary attempts to gain access to ot
 
 Cheat Sheet
 ```powershell
+# First impersonate user
+
 # Syntax
 beacon> jump [exploit] [target] [listener]
 beacon> remote-exec [method] [target] [command]

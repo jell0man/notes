@@ -20,6 +20,15 @@ _Listener_ - defines the protocol and parameters by which a Beacon payload will 
 	Peer-to-Peer
 		Traffic routed through another beacon
 		SMB and TCP
+
+```
+in general, i would say: 
+
+dns -> long-haul persistence 
+http/s -> post-ex 
+smb -> lateral movement 
+tcp-local -> priv esc
+```
 ### HTTP Listener
 Directs Beacon to communicate with team server via HTTP GET and/or POST requests
 

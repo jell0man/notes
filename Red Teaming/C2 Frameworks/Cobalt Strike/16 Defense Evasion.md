@@ -574,6 +574,11 @@ Policies are defined by system administrators and typically deployed to computer
 		Allow | Everyone | Publisher | *
 #### Enumeration
 AppLocker policies can be enumerated from two locations: directly from the GPO, or from the local registry of a computer to which they're applied.
+
+```powershell
+# Check if Constrained Language Mode is present
+beacon> powershell $ExecutionContext.SessionState.LanguageMode
+```
 ###### Registry
 Useful in scenarios where you already have console access to a protected machine
 ```powershell
@@ -633,7 +638,7 @@ There are multiple directories that exist within default allowed path `%WINDIR%\
 ###### LOLBAS
 Some [LOLBAS](https://lolbas-project.github.io/) can execute arbitrary code to bypass AppLocker if in whitelisted locations such as `%WINDIR%\*`
 
-See [[00 CRTO - Cheatsheet|00 CRTO - Cheatsheet]] in Applocker for guided steps on this part
+See [[An0nud4y CRTO Cheatsheet|00 CRTO - Cheatsheet]] in Applocker for guided steps on this part
 
 Example - MSBuild running crafted .csproj file
 ```C#
@@ -681,7 +686,7 @@ Guid
 ----
 6136e053-47cb-4fdd-84b1-381bc5f3edb3
 
-# Create malicious dll and save (See source code)
+# Create malicious dll and save (See source code below)
 
 # Create paths
 C:\Users\pchilds> New-Item -Path 'HKCU:Software\Classes\CLSID' -Name '{6136e053-47cb-4fdd-84b1-381bc5f3edb3}'

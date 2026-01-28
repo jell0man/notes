@@ -54,7 +54,7 @@ Impersonate users
 ```sql
 SELECT distinct b.name FROM sys.server_permissions a INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id WHERE a.permission_name = 'IMPERSONATE'  
 	
-	# this will display user(s) we can impersonate
+	-- this will display user(s) we can impersonate
 
 EXECUTE AS LOGIN = '<user>'
 ```

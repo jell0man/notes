@@ -55,6 +55,9 @@ NOTE: Returning the security descriptor is essential if you want BloodHound to i
 
 ldapsearch Usage -- [userAccountControl Property Flags](https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/useraccountcontrol-manipulate-account-properties)
 ```powershell
+## PREFACE - IF ENUMERATING A DOMAIN THAT ISNT YOUR OWN, YOU NEED TO ADD THE FOLLOWING TO A QUERY
+	--dn DC=partner,DC=com --hostname partner.com # this is an example...
+
 # syntax
 beacon> ldapsearch [filter(s)] --[options]
 
@@ -126,10 +129,13 @@ beacon> ldapsearch (objectClass=trustedDomain) --attributes trustPartner,trustDi
 # Query Trust Accounts
 beacon> ldapsearch (samAccountType=805306370) --attributes samAccountName
 
+# Enumerate Hosts in domain
+beacon> ldapsearch (samAccountType=805306369) --attributes samAccountName --dn DC=contoso,DC=enclave --hostname contoso.enclave
+
 # Obtain domain SID for child domain
 beacon> ldapsearch (objectClass=domain) --attributes objectSid
 
-# Obtain domain SID of parent domain
+# Obtain domain SID of parent domain (or adjacent domain in general...)
 beacon> ldapsearch (objectClass=domain) --attributes objectSid --hostname lon-dc-1.contoso.com --dn DC=contoso,DC=com # set dn to PARENT distignuished name
 	# NOTE: when crafting ticket, add RID of 519 to end. This is EA group
 	
@@ -142,6 +148,9 @@ BOFHound is not a BOF.  It's a Python script that is capable of parsing the raw
 
 General Workflow
 ```powershell
+## PREFACE - IF ENUMERATING A DOMAIN THAT ISNT YOUR OWN, YOU NEED TO ADD THE FOLLOWING TO A QUERY
+	--dn DC=partner,DC=com --hostname partner.com # this is an example...
+
 # Collect basic info like domain, computers, users, groups, OUs, and GPOs
 beacon> ldapsearch (|(objectClass=domain)(objectClass=organizationalUnit)(objectClass=groupPolicyContainer)) --attributes *,ntsecuritydescriptor
 beacon> ldapsearch (|(samAccountType=805306368)(samAccountType=805306369)(samAccountType=268435456)) --attributes *,ntsecuritydescriptor
@@ -152,16 +161,30 @@ attacker@DESKTOP-FGSTPS7:/mnt/c/Users/Attacker/Desktop$ scp -r attacker@10.0.0.5
 # run bofhound againts copied log directory
 attacker@DESKTOP-FGSTPS7:/mnt/c/Users/Attacker/Desktop$ bofhound -i logs/
 
+# Run Bloodhound
+Start Menu > Docker Desktop
+Containers
+Start all containes
+Edge > http://localhost:8080/ui/login
+
 # Log into BloodHound UI and upload parsed JSON files
 Login to BloodHound
 Administration > File Ingest
 upload JSON files
 
+# Cypher Query
 # Query data with cypher queries
 MATCH (m:Computer) RETURN m                   # computers
 MATCH (m:User) Return m                       # users
 MATCH (n:User) WHERE n.hasspn=true RETURN n   # kerberoastable users
 Match (n:GPO) return n                        # GPOs
+
+# Resolve SIDs with no name
+beacon> ldapsearch (objectsid=[SID]) --attributes *,ntsecuritydescriptor
+
+# redo copy log steps
+# run bof hound
+# Reingest
 ```
 NOTE: any object that only has SID, or 'no name or id', we need to collect more data and ingest it.
 	`beacon> ldapsearch (objectsid=[SID]) --attributes *,ntsecuritydescriptor`
@@ -196,7 +219,7 @@ What to do with restricted group data?
 	Second SID = local group. Check microsoft [documentation](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers) to identify.
 		ie: `S-1-5-32-544` = local admin
 	What is this telling us?
-		Members of domain group SID belong to local group SID on computer identified.
+		Members of domain group SID belong to local group SID on computer IDENTIFIED.
 
 Update BloodHound manually with new information
 ```cypher
