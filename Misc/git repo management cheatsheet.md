@@ -25,10 +25,10 @@ initial repo creation
 ```powershell
 echo "STUFF" >> README.md
 git init
-git add <files>  # git add . for all files in dir
+git add <files>  # git add . for all files in dir / -A = all & recursive
 git commit -m "first commit"
 git branch -M main
-git remote add origin https://github.com/jell0boy/<repo_name>.git
+git remote add origin https://github.com/jell0man/<repo_name>.git
 git push -u origin main
 ```
 
@@ -38,7 +38,6 @@ git add <files>    # -A for all
 git commit -m "message"
 git push origin main
 ```
-
 
 Recovery Sequence (In case repo gets messed up)
 ```powershell

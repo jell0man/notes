@@ -84,7 +84,7 @@ beacon> mv dns_x64.exe cmd.exe
 ![[Pasted image 20251223151318.png]]
 
 #### Unquoted Paths
-CreateProcess exhibits more interesting behavior when the `lpCommandLine` parameter contains spaces _and not_ encapsulated by a set of quotations. Does not follow search order but interprets path based on white spaces. See [[Master Checklist]] to recall
+CreateProcess exhibits more interesting behavior when the `lpCommandLine` parameter contains spaces _and not_ encapsulated by a set of quotations. Does not follow search order but interprets path based on white spaces. See [[Master Checklist (OLD)]] to recall
 
 Example of Unquoted Path Search Order
 ```powershell
