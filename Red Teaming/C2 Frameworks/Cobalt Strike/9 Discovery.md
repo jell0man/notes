@@ -83,13 +83,22 @@ beacon> ldapsearch [filter(s)] --[options]
 _________________________________________________________________________________
 
 ## example usage 
-beacon> ldapsearch (samAccountType=805306368)    # search for all normal users
+
+# Users
+beacon> ldapsearch (samAccountType=805306368)   
 	# Make note of ATTRIBUTES returned as we can filter by these
 
-beacon> ldapsearch (&(samAccountType=805306368)(adminCount=1)) # Administrators
-beacon> ldapsearch (&(samAccountType=805306368)(|(description=*admin*)(samaccountname=*adm*)))   # users that are Administrator OR had 'adm' in name
-beacon> ldapsearch (&(samAccountType=805306368)(adminCount=1)(!(name=krbtgt))) # all admins but NOT krbtgt user
-beacon> ldapsearch (&(samAccountType=805306368)(adminCount=1)) --attributes name,memberof # Administrators and only displaying their name and groups
+# Administrators
+beacon> ldapsearch (&(samAccountType=805306368)(adminCount=1)) 
+
+# users that are Administrator OR had 'adm' in name
+beacon> ldapsearch (&(samAccountType=805306368)(|(description=*admin*)(samaccountname=*adm*)))   
+
+# all admins but NOT krbtgt user
+beacon> ldapsearch (&(samAccountType=805306368)(adminCount=1)(!(name=krbtgt))) 
+
+# Administrators and only displaying their name and groups
+beacon> ldapsearch (&(samAccountType=805306368)(adminCount=1)) --attributes name,memberof 
 
 
 ## Some more useful queries

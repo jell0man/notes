@@ -1,23 +1,24 @@
 my creds
-
-neo4j:neo
-
-
+	neo4j:neo
 
 Neo4j Default creds
 	neo4j:neo4j
 
-Start Neo4j service
-	`sudo neo4j start`
-	Started neo4j (pid:334819). It is available at http://localhost:7474
+#### Neo4j Setup
+```bash
+# Initialize db
+neo4j start  # as root
 
-Login to Neo4j
-	`http://localhost:7474`
-	neo4j:neo4j
-	Change password to whatever we like
-		neo4j:neo
+# Setup
+firefox
+http://127.0.0.1:7474
+neo4j : neo4j         # default creds
+	# if this is not working, you can disable auth by the following
+	vim /etc/neo4j/neo4j.conf
+	dbms.security.auth_enabled=false  # uncomment this line
 
+# Change creds... If you disable auth, bloodhounw will not require creds
 
-Start Bloodhound on KALI
-	`bloodhound`
-	login with neo4j creds
+# Now you can run bloodhound and login ;)
+bloodhound
+```

