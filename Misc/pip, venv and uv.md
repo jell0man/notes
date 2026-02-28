@@ -27,7 +27,7 @@ source .venv/bin/activate
 uv pip install -r requirements.txt
 
 # Run your script
-python3 script.py
+uv run python3 script.py ...
 
 # Leave the environment
 deactivate

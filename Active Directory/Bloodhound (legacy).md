@@ -38,7 +38,7 @@ Run sharphound
 		`Get-Help Invoke-Bloodhound
 		`Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\joe\Documents\windows -OutputPrefix "audit"`
 Bloodhound-python (ldap)
-```
+```bash
 bloodhound-python -c All -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' -ns 10.80.80.2
 
 # via proxy

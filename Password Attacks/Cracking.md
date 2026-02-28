@@ -125,6 +125,15 @@ If you obtain these via something such as `mimikatz lsadump::cache`, note that t
 hashcat -m 2100 '$DCC2$<ITERATIONS>#jdoe#ab01cd02ef03gh04ij05kl06mn07op08' /path/to/wordlist.txt
 ```
 ## Cracking with Salts
+New
+```bash
+# Create hash_salt file
+echo "<pass_hash>:<salt>" > salted_hash.txt
+
+# Idenfity structure of it and use hashcat (plug into ai)
+```
+
+Old
 ```bash
 # Download binary
 wget https://www.techsolvency.com/pub/bin/mdxfind/mdxfind.static -O mdxfind

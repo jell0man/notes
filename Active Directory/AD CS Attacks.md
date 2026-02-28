@@ -26,5 +26,8 @@ Based on the results, the README will guide on the actions to take
 
 Usage
 ```bash
-certipy find -u 'user' -p 'pass' -target <target> -text -stdout -vulnerable
+certipy find -u 'user' -p 'pass' [-hashes <NTLM>] -target <target> -text -stdout -vulnerable
+
+# Look Here
+[!] Vulnerabilities
 ```

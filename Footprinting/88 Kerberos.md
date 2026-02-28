@@ -1,4 +1,4 @@
-User Enumeration
+## User Enumeration
 
 Nmap
 ```bash
@@ -11,7 +11,7 @@ nmap -p 88 --script=krb5-enum-users --script-args krb5-enum-users.realm=<Domain>
 ```
 
 Kerbrute
-```
+```bash
 Download: https://github.com/ropnop/kerbrute
 
 ./kerbrute userenum <UserList> --dc <IP> --domain <Domain>
@@ -29,7 +29,7 @@ Available Commands:
 ```
 
 Rubeus
-```
+```powershell
 # with a list of users
 .\Rubeus.exe brute /users:<UserList> /passwords:<Wordlist> /domain:<Domain>
 

@@ -1,4 +1,5 @@
 ```powershell
+## Windows
 # Retrieve Windows time (UTC)
 (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss")
 

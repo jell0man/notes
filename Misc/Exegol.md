@@ -50,6 +50,9 @@ exegol start [container] [image] [options...]
 
 # Executing one-off commands
 exegol exec <container OR image> <command> [command...]
+
+# Get container info
+exegol info [container_name]
 ```
 
 [[Windows Terminal Shortcuts]] (for quick reference :))
