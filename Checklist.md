@@ -651,7 +651,7 @@ Medium Integrity credential access
 		Decrypt creds `.\SharpDPAPI.exe credentials /rpc`
 			-
 
-Manual Enumeration: `# dir /a /q`
+Manual Enumeration: `# dir /a /q [/R]    # -r: Alternate data streams`
 	`\directory\we\spawn\in    # and adjacents`
 		-
 	`\Users\<user>\AppData\stuff
@@ -677,6 +677,8 @@ Search for specific files `# Use Get-ChildItem premade queries from master check
 	zip files
 		-
 	SAM/SYSTEM/SECURITY
+		-
+	Alternate Data Streams `# NOTE: this is really CTFy... dir /R`
 		-
 
 Automations

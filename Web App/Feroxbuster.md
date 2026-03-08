@@ -7,6 +7,7 @@ feroxbuster --url http://<ip_address>/<dir> --wordlist=<path_to_wordlist>
 /usr/share/dirb/wordlists/common.txt
 /usr/share/dirb/wordlists/big.txt
 /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-big.txt
+	DirBuster-2007_directory-list-2.3-big.txt
 
 # extensions
 -x php,txt,bak,html,zip,conf,py,aspx,sl,sh # sh files indicates shellshock exploit

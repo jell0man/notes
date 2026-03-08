@@ -1,3 +1,2 @@
-An evolving collection of notes and templates for penetration testing and red teaming.
+This repository serves as a comprehensive, living knowledge base for penetration testing, red team operations, and the broader security landscape. Originally established as a focused resource for OSCP preparation, the project has since evolved into a documentation hub for penetration testing, red teaming, and adjacent topics.
 
-Initially a personal resource for OSCP preparation, this repository is now being actively expanded to cover materials relevant to CRTO and CPTS.
