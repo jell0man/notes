@@ -19,12 +19,17 @@ C:\xampp\htdocs
 \xampp\php\php.ini # php conf file
 \xampp\mysql\bin\my.ini # mysql conf file
 
-# Linux
+# Linux 
 /var/www/html
 /var/www/<site>
-/var/www/html/wordpress  # wordpress common place
+/var/www/<site>/index.php   # have nginx or apache configs? site is there
+/var/www/html/wordpress     # wordpress common place
 
+# nginx
+/etc/nginx/sites-enabled/default
 
+# Apache
+/etc/apache2/sites-enabled
 
 # Some interesting files for wordpress
 /var/www/html/wordpress/index.php

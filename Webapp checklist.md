@@ -37,7 +37,10 @@
 	        
     - [ ] Compare page sources of similar pages.
 	        
-
+- [ ] **Misc:**
+	
+	- [ ] Inspect Element for any masked characters that cover user passwords. The password MIGHT be in cleartext.
+		
 ##### 3. Authentication & Portals
 
 - [ ] **Default Credentials:**

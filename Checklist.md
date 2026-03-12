@@ -80,6 +80,10 @@ place ports and findings here...
 	        
     - [ ] Compare page sources of similar pages.
 	        
+- [ ] **Misc:**
+	
+	- [ ] Inspect Element for any masked characters that cover user passwords. The password MIGHT be in cleartext.
+		
 
 ##### 3. Authentication & Portals
 
@@ -743,7 +747,7 @@ switch user `# su -l <user>`
 	ssh reuse
 		-
 
-os/kernel version info `# is gcc present?` [[OSCP Prep/Methodology Notes/PrivEsc/Kernel Exploits|Kernel Exploits]]
+os/kernel version info `# is gcc present?`
 	-
 	`searchsploit #.#.#-###`
 		-
