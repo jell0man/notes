@@ -58,6 +58,12 @@ Enum users
 	MATCH (m:User) Return m
 		save to users.txt file
 
+Enum groups
+	
+
+Enumerating an unknown SID
+	MATCH (n {objectid: 'S-1-5-21-...' }) RETURN n
+
 
 Clear database
 ![[Pasted image 20250226191828.png]]

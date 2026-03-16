@@ -3,8 +3,7 @@ Install Golang
 curl -sS https://webi.sh/golang | sh
 source ~/.config/envman/PATH.env
 ```
-
-Variables
+#### Variables
 ```go
 // 1. VARIABLE DECLARATION
 // -----------------------
@@ -52,8 +51,7 @@ openRate := 98.765
 msg := fmt.Sprintf("Hi %s, your open rate is %.1f percent\n", name, openRate)
 fmt.Print(msg) // Output: Hi Gemini, your open rate is 98.8 percent
 ```
-
-Conditionals
+#### Conditionals
 ```go
 // 1. BASIC IF / ELSE IF / ELSE
 // ----------------------------
@@ -104,8 +102,7 @@ func getCreator(os string) string {
     return creator
 }
 ```
-
-Functions
+#### Functions
 ```go
 // ==========================================
 // 1. BASIC SYNTAX & PARAMETERS
@@ -230,47 +227,143 @@ func baseEncoder(algorithm string) func(string) string {
 	}
 }
 ```
-
-Structs
+#### Structs
 ```go
-// Structs represent structured data
-type car struct {
-	brand      string
-	mileage    int
+// --- GO STRUCTS REFERENCE ---
+
+// 1. BASIC STRUCTS
+// Represent structured data with named fields.
+type Car struct {
+	Brand   string
+	Mileage int
 }
 
-// Nested Structs
-type car struct {
-	frontWheel  wheel   // we declare frontWheel belongs wo wheel structs
+// 2. NESTED STRUCTS
+// Structs that contain other structs as fields.
+type Wheel struct {
+	Radius int
+}
+type NestedCar struct {
+	FrontWheel Wheel // FrontWheel is of type Wheel
 }
 
-type wheel struct {
-	radius   int
+/* Usage:
+	myCar := NestedCar{}
+	myCar.FrontWheel.Radius = 5 // Use the dot operator to access fields
+*/
+
+// 3. ANONYMOUS STRUCTS
+// Declared and instantiated simultaneously.
+// Note: In general, prefer named structs for reusability.
+/* Usage:
+	myCar := struct {
+		Brand string
+		Model string
+	}{
+		Brand: "Toyota",
+		Model: "Camry",
+	}
+*/
+
+// 4. EMBEDDED STRUCTS
+// Go's version of data-only inheritance (composition).
+type BaseCar struct {
+	Brand string
+	Model string
 }
 
-myCar := car{}                  // assigning myCar as a car struct
-myCar.frontWheel.radius = 5     // . operator to access struct fields
-
-// Anonymous Structs -- In general, prefer named structs
-myCar := struct {
-  brand string
-  model string
-} {
-  brand: "Toyota",
-  model: "Camry",
+type Truck struct {
+	BaseCar         // Embedded struct: Truck inherits all fields of BaseCar
+	BedSize int
 }
 
-// Embedded Structs - A KIND OF data-only inheritance
-type car struct {
-  brand string
-  model string
+/* Usage:
+	t := Truck{}
+	t.Brand = "Ford" // Fields from BaseCar are promoted and accessible directly
+*/
+
+// 5. STRUCT METHODS
+// Functions that attach to a specific type via a "receiver".
+
+// Example A: Simple value receiver
+type Rect struct {
+	Width  int
+	Height int
 }
 
-type truck struct {
-  // "car" is embedded, so the definition of a
-  // "truck" now also additionally contains all
-  // of the fields of the car struct
-  car
-  bedSize int
+// 'r' is the receiver. It receives a copy of the Rect struct.
+func (r Rect) Area() int {        
+	return r.Width * r.Height          
+}
+
+/* Usage:
+	r := Rect{Width: 5, Height: 10}
+	fmt.Println(r.Area())
+*/
+
+// Example B: Method with arguments and multiple return values
+type User struct {
+	MessageCharLimit int
+}
+
+func (u User) SendMessage(message string, messageLength int) (string, bool) {
+	if messageLength <= u.MessageCharLimit {
+		return message, true
+	}
+	return "", false
+}
+
+// 6. MEMORY LAYOUT
+// Go allocates structs in contiguous blocks of memory.
+// Field ordering matters! The compiler adds "padding" to align memory.
+// Best practice: Order fields from largest to smallest data type to save space.
+
+type Stats struct { // Efficient ordering: 2 bytes + 1 byte + 1 byte = 4 bytes total
+	Reach    uint16
+	NumPosts uint8
+	NumLikes uint8
+}
+
+/* Debugging memory layout:
+	import "reflect"
+	
+	typ := reflect.TypeOf(Stats{})
+	fmt.Printf("Struct is %d bytes\n", typ.Size())
+*/
+
+// 7. EMPTY STRUCTS
+// Used as a unary value. They consume exactly 0 bytes of memory!
+// Highly useful for channel signals or creating sets from maps.
+
+/* Usage:
+	// Anonymous empty struct
+	empty1 := struct{}{}        
+	
+	// Named empty struct type
+	type EmptyStruct struct{}  
+	empty2 := EmptyStruct{}
+*/
+```
+#### Interfaces
+Allow you to focus on what a type does rather than how it's built. Help you define behaviors that different types can share.
+
+```go
+// interface -- shape defines the behavior shared between circle and rect.
+type shape interface {    // the interface... interface{} = empty interface
+  area() float64
+  perimeter() float64
+}
+type rect struct {
+    width, height float64
+}
+func (r rect) area() float64 {
+    return r.width * r.height
+}
+
+type circle struct {
+    radius float64
+}
+func (c circle) perimeter() float64 {
+    return 2 * math.Pi * c.radius
 }
 ```

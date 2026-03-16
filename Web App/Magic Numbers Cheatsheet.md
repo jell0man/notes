@@ -284,4 +284,13 @@ This gives an ongoing list of file-type magic numbers
 	example:
 		`%PDF-1.3`
 
+WAV
+	MIME / Content Type : `video/x-ms-wmv`
+	30 26 B2 75 8E 66 CF 11 A6 D9 00 AA 00 62 CE 6C
+	0&²u.fÏ.¦Ù.ª.bÎl
+
+ASX
+	MIME/ Content-Type : `video/x-ms-asf`
+	30 26 B2 75 8E 66 CF 11
+
 <a href="http://www.astro.keele.ac.uk/oldusers/rno/Computing/File_magic.html#Image">Source</a>

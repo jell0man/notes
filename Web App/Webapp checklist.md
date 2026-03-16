@@ -210,9 +210,11 @@
 - [ ] **1. Initial Upload & Client-Side Bypass**
     
     - [ ] Upload a raw shell (`shell.php`) to test baseline validation.
-        
+	        
     - [ ] Inspect page source (CTRL+SHIFT+C) and delete client-side JS validation functions (e.g., `onchange="checkFile(this)"`).
-        
+		    
+	- [ ] Test for SSRF by uploading a file a user will click that hits Responder. Capture hash.
+			
 - [ ] **2. Extension Filtering (Blacklists & Whitelists)**
     
     - [ ] **Fuzz Extensions:** Use Burp Intruder to test alternative extensions (`.php5`, `.phtml`, `.shtml`).

@@ -2,6 +2,8 @@ File upload vulnerabilities are amongst the most common vulnerabilities found in
 
 If web page is missing validation, you can just upload a web shell, backdoor, reverse shell, and visit 
 it to obtain a shell. See [[Web Shells]] and [[Methodology/Shells/Reverse Shells|Reverse Shells]]
+
+Consider chaining with Responder to capture a hash upon a user clicking (if reverse shells fail)
 ## Bypassing Filters
 Many web apps use methods to validate file format prior to upload. There are methods to bypass this
 
