@@ -66,15 +66,29 @@ If you land on a box that uses Git, you can enumerate the repository state and h
     - Press `n` to jump to the next highlighted keyword.
     - Append `| grep <filter>` to see all instances of a keyword in the output.
 
+NOTE: If /.git/ gives you a 403, you can still try. Extra validation if you can `curl -s /.git/HEAD`
+
 #### Dumping Remote Repositories (git-dumper)
 Use `git-dumper` to download an entire Git repository from a target URL to your local machine.
 
 ```bash
+# Setup
 python3 -m venv .venv
 source .venv/bin/activate 
 python3 -m pip install git-dumper
 
+# Dumping
 git-dumper <URL> <output_directory>
+
+# Enumerating
+git status
+	# Potentially restore previous commits
+	git restore --staged <file>
+	
+git log                      # View commit history
+	git log --oneline --all  # Capture Commit ID (First 7 characters!)
+
+git show <commit ID>
 ```
 
 Once dumped, navigate into the output directory and use `git status`, `git log`, and `git show` exactly as if you were in the actual live directory. Be sure to enumerate the raw files as well.

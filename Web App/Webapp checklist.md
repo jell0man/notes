@@ -27,7 +27,7 @@
 	        
     - [ ] `/.env`
 	        
-    - [ ] `/.git` (Use `git-dumper` if found)
+    - [ ] `/.git` (Use `git-dumper`. Also `curl -s URL/.git/HEAD`. 403? Try dumping as well)   
 	        
     - [ ] `/api/` (Try generic endpoints)
 	        

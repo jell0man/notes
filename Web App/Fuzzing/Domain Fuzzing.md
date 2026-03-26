@@ -7,6 +7,7 @@ If there are public sub-domains present, we can fuzz with ffuf very simply like 
 
 Sub-Domain Fuzzing
 ```bash
+# NOTE: http vs https MATTERS. If DNS is mentioned in nmap and specifies *.domain in http or https, fuzz with the SPECIFIED protocol. 
 ffuf -w <wordlist>:FUZZ -u https://FUZZ.<server>/
 ```
 
@@ -15,6 +16,8 @@ If we are fuzzing sub-domains that do not have public DNS records, we must fuzz 
 
 Vhost Fuzzing with ffuf
 ```bash
+# NOTE: http vs https MATTERS. If DNS is mentioned in nmap and specifies *.domain in http or https, fuzz with the SPECIFIED protocol. 
+
 1. # Determine word length
 ffuf -u http://<domain> -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -H "Host: FUZZ.<domain>"
 
