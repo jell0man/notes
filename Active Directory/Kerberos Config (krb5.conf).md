@@ -2,6 +2,12 @@ _krb5_ : Kerberos network authentication protocol version 5
 
 Prior to engaging with Kerberos on a target, it is good practice to configure the krb5.conf file point to the correct KDC and realm. Otherwise, Kerberos-based tools such as getTGT, getST may fail.
 
+Auto Create
+```bash
+nxc smb <ip> --generate-krb5-file krb5.conf            # Generate krb5conf file
+sudo cp krb5.conf /etc/krb5.conf
+```
+
 Modify krb5.conf
 ```bash
 # Replace <> entries based on environment. Capitalization matters!

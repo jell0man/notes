@@ -15,3 +15,10 @@ export KRB5CCNAME=/path/to/captured_tgt.ccache
 unset KRB5CCNAME
 rm captured_tgt.kirbi captured_tgt.ccache
 ```
+
+Kinit
+```bash
+# This is an alternative method. Auto places ticket in default location, so you don't have to set it.
+kinit <user>
+Enter password:
+```
