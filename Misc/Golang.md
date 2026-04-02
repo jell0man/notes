@@ -348,22 +348,169 @@ type Stats struct { // Efficient ordering: 2 bytes + 1 byte + 1 byte = 4 bytes t
 Allow you to focus on what a type does rather than how it's built. Help you define behaviors that different types can share.
 
 ```go
-// interface -- shape defines the behavior shared between circle and rect.
-type shape interface {    // the interface... interface{} = empty interface
-  area() float64
-  perimeter() float64
+// ==========================================
+// 1. DEFINING INTERFACES
+// ==========================================
+
+// An interface defines a set of method signatures (a "behavior contract").
+// Any type that implements ALL methods automatically satisfies the interface.
+// No "implements" keyword — it's implicit.
+
+// Design Rules:
+// - Keep interfaces small (1-3 methods is ideal).
+// - Define interfaces where they're USED, not where they're implemented.
+// - They are NOT classes. Think "what can it do?" not "what is it?"
+
+type shape interface {
+	area() float64
+	perimeter() float64
 }
+
+// ==========================================
+// 2. IMPLEMENTING AN INTERFACE
+// ==========================================
+
+// A type satisfies an interface just by having all the right methods.
+// No explicit declaration needed — if it has the methods, it qualifies.
+
 type rect struct {
-    width, height float64
+	width, height float64
 }
 func (r rect) area() float64 {
-    return r.width * r.height
+	return r.width * r.height
+}
+func (r rect) perimeter() float64 {
+	return 2 * (r.width + r.height)
 }
 
 type circle struct {
-    radius float64
+	radius float64
+}
+func (c circle) area() float64 {
+	return math.Pi * c.radius * c.radius
 }
 func (c circle) perimeter() float64 {
-    return 2 * math.Pi * c.radius
+	return 2 * math.Pi * c.radius
+}
+
+// Both rect and circle now satisfy the shape interface.
+func printShapeDetails(s shape) {
+	fmt.Printf("Area: %.2f, Perimeter: %.2f\n", s.area(), s.perimeter())
+}
+
+// ==========================================
+// 3. THE EMPTY INTERFACE
+// ==========================================
+
+// interface{} (or 'any' in Go 1.18+) has zero methods.
+// Every type satisfies it. Use when you need to accept anything.
+
+func logAnything(val interface{}) {
+	fmt.Printf("Value: %v, Type: %T\n", val, val)
+}
+
+// ==========================================
+// 4. TYPE ASSERTIONS
+// ==========================================
+
+// When a value is stored in an interface, you can only call the interface's methods.
+// The concrete type's fields are hidden behind the interface wrapper.
+// A type assertion "unwraps" the interface to get the original type back.
+//
+// Syntax: concreteVal, ok := interfaceVal.(ConcreteType)
+// ok = true  → Correct guess. concreteVal is the fully unwrapped type.
+// ok = false → Wrong guess. concreteVal is a useless zero-value.
+// WARNING: Skipping the comma-ok and guessing wrong = runtime panic!
+
+func printShapeInfo(s shape) {
+	// s.radius won't compile — shape doesn't promise a radius field.
+	// Assert s back to circle first to access .radius.
+	c, ok := s.(circle)
+	if ok {
+		fmt.Printf("Circle with radius: %v\n", c.radius)
+		return
+	}
+	r, ok := s.(rect)
+	if ok {
+		fmt.Printf("Rect %v x %v\n", r.width, r.height)
+		return
+	}
+}
+
+// ==========================================
+// 5. TYPE SWITCHES
+// ==========================================
+
+// Clean alternative to chaining type assertions.
+// Uses the special .(type) syntax — only valid inside a switch.
+
+func describeValue(val interface{}) {
+	switch v := val.(type) {
+	case int:
+		fmt.Printf("Integer: %d\n", v)
+	case string:
+		fmt.Printf("String: %s\n", v)
+	case bool:
+		fmt.Printf("Boolean: %t\n", v)
+	default:
+		fmt.Printf("Unknown type: %T\n", v)
+	}
+}
+
+// ==========================================
+// 6. PRACTICAL EXAMPLE
+// ==========================================
+
+// Notification system: multiple types share a common behavior.
+
+// Declaring the interface
+type notification interface {
+	importance() int
+}
+
+// Structs and their methods — each one satisfies notification
+type directMessage struct {
+	senderUsername string
+	messageContent string
+	priorityLevel  int
+	isUrgent       bool
+}
+func (d directMessage) importance() int {
+	if d.isUrgent {
+		return 50
+	}
+	return d.priorityLevel
+}
+
+type groupMessage struct {
+	groupName      string
+	messageContent string
+	priorityLevel  int
+}
+func (g groupMessage) importance() int {
+	return g.priorityLevel
+}
+
+type systemAlert struct {
+	alertCode      string
+	messageContent string
+}
+func (s systemAlert) importance() int {
+	return 100
+}
+
+// Type switch to handle each notification type cleanly
+func processNotification(n notification) (string, int) {
+	switch v := n.(type) {
+	case directMessage:
+		return v.senderUsername, v.importance()
+	case groupMessage:
+		return v.groupName, v.importance()
+	case systemAlert:
+		return v.alertCode, v.importance()
+	default:
+		return "", 0
+	}
 }
 ```
+#### Errors
