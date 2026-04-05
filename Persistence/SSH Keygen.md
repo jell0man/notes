@@ -1,6 +1,6 @@
 https://medium.com/@cuncis/implanting-ssh-keys-a-step-by-step-guide-with-command-examples-f57b21690854
 
-The following are steps on how to generate SSH keys and use them to gain access. Use this in instances where reverse shells are unstable, if you need persistence, etc...
+The following are steps on how to generate SSH keys and use them to gain access. Use this in instances where reverse shells are unstable, if you need persistence, etc..
 
 Kali
 ```bash

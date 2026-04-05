@@ -239,8 +239,7 @@ Two Types of Learning Problems:
 | `Cross-Validation` | Technique used to assess how well a model will generalize to an independent dataset                                                       |
 | `Regularization`   | Technique used to prevent overfitting by adding a penalty term to the loss function; discourages overly complex patterns                  |
 ### Linear Regression
-`Linear Regression` is a fundamental `supervised learning` algorithm that predicts a continuous target variable by establishing a linear relationship between the target and one or more predictor variables. 
-
+`Linear Regression` is a fundamental `supervised learning` algorithm that predicts a continuous target variable by establishing a linear relationship between the target and one or more predictor variables
 
 ### Logistic Regression
 ### Decision Trees

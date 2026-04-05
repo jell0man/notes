@@ -1,4 +1,4 @@
-I have a premade resume.odt file saved in documents that catches a reverse shell over port 80
+A premade resume.odt file is saved in documents that catches a reverse shell over port 80
 
 To create a new one:
 

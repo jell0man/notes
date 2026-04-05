@@ -29,4 +29,4 @@ ACME-IPT/
 │   └── Wireless
 └── Retest
 ```
-Then just load into something like Obsidian
+Then just load into something like Obsidian.
