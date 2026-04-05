@@ -5,7 +5,7 @@ This if for me working from Ubuntu WSL. Note I only have access to the free imag
 Exegol Usage
 ```bash
 # HTB One-Liner Setup
-exegol start inquisitor --desktop --vpn </mnt/c/path/htb.ovpn> -V /path/on/host/:/path/in/container
+exegol start <name> --desktop --vpn </mnt/c/path/htb.ovpn> -V /path/on/host/:/path/in/container
 	# -V : mount point
 	# Once setup, you can just run this to start it in others panes/tabs
 	exegol start inquisitor
