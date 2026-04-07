@@ -22,6 +22,9 @@ Set-ADAccountPassword <name> -NewPassword (ConvertTo-SecureString 'YouGotPwn3d!x
 
 nxc Alternative
 ```bash
+# Install tombstone module (see Netexec installing modules section)
+	# raw.githubusercontent.com/Fabrizzio53/NetExec/main/nxc/modules/tombstone.py
+
 # Query for deleted users
 -M tombstone -o ACTION=query   # Make note of ID
 

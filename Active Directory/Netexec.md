@@ -13,6 +13,9 @@ nxc smb <T> -u usr.txt -p <P> --no-bruteforce          # 1 try/user (no lockouts
 
 -d <domain>  # specify domain for domain auth
 
+# === MODULES =====================================================================
+nxc <protocol> <T> -u <U> -p <P> --list-modules        # Lots of stuff!!! 
+
 # === KERBEROS & TICKETS ==========================================================
 -k, --kerberos # Use Kerberos auth
 --use-kcache   # Use Kerberos authentication from ccache file 
@@ -30,8 +33,6 @@ export KRB5CCNAME=t.ccache; nxc smb <T> --use-kcache   # Pass-the-Ticket (PtT)
 
 # === ENUM & SECRETS ==============================================================
 nxc ldap <T> -u <U> -p <P> --users --groups            # Users and Groups
-nxc ldap <T> -u <U> -p <P> -M tombstone -o ACTION=query# Query for deleted users
-	-M tombstone -o ACTION=restore ID=<ID> SCHEME=ldap # Restore deleted User
 nxc smb <T> -u <U> -p <P> --rid-brute                  # RID Cycling
 nxc smb <T> -u <U> -p <P> --shares                     # Shares
 nxc smb <T> -u <U> -p <P> -M webdav                    # Webdav
@@ -43,6 +44,8 @@ nxc smb <T> -u <U> -p <P> --sam                        # Dump SAM hashes
 nxc smb <T> -u <U> -p <P> --lsa                        # Dump LSA secrets
 nxc smb <T> -u <U> -p <P> --ntds                       # Dump NTDS.dit (DC)
 nxc ldap <T> -u <U> -p <P> -M laps                     # Read LAPS passwords
+nxc ldap <T> -u <U> -p <P> -M tombstone -o ACTION=query# Query for deleted objects 
+	-M tombstone -o ACTION=restore ID=<ID> SCHEME=ldap # Restore deleted User
 
 # === EXECUTION ===================================================================
 nxc smb <T> -u <U> -p <P> -x "cmd"                     # CMD exec (wmiexec)
@@ -82,6 +85,18 @@ nxc ldap '<dc_hostname.domain>(or IP address)' -d '<domain_name>' -u '<user>' -p
 
 # proxychains
 proxychains -q nxc ldap DC1.ad.lab -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' --bloodhound -c All --dns-server 10.80.80.2 --dns-tcp
+```
+
+## Installing Modules
+```bash
+# Locate modules directory
+find / -path "*/nxc/modules" -type d 2>/dev/null
+
+# Download module file
+curl -o <file.py> <URL>
+
+# Verify it loads
+nxc <protocol> --list-modules | grep '<module>'
 ```
 
 ## Troubleshooting

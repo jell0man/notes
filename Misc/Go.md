@@ -887,4 +887,28 @@ func getMessageCosts(messages []string) []float64 {
 	}
 	return messageCosts
 }
+
+// Slice of Slices -- effectively creating a matrix
+rows := [][]int{} // declare 2D slice
+rows = append(rows, []int{1, 2, 3})
+rows = append(rows, []int{4, 5, 6})
+fmt.Println(rows)
+// [[1 2 3] [4 5 6]]
+
+// example
+func createMatrix(rows, cols int) [][]int {
+	// 1. Declare as a 2D slice ([][]int)
+	matrix := make([][]int, rows)
+	for i := 0; i < rows; i++ {
+		// 2. Use standard assignment (=) instead of short declaration (:=)
+		matrix[i] = make([]int, cols)
+		for j := 0; j < cols; j++ {
+			matrix[i][j] = i * j
+		}
+	}	
+	return matrix
+}
+
+// tricky slices -- The append() function changes the underlying array of its parameter AND returns a new slice. Ussing append on anything other than itself is a BAD idea.
+someSlice = append(otherSlice, element) // don't do this
 ```

@@ -34,6 +34,10 @@ Get-DomainGroup -Identity "<group>"
 # Find parent group
 | select memberof
 ```
+
+LINUX -- bloodyAD or dacledit
+
+
 This can be useful if a user is a member of a group that INHERITS its parent's group rights
 
 After Enumerating, you can proceed to ACL Attacks
