@@ -77,7 +77,25 @@ if height > 6 {
 }
 
 // ==========================================
-// 2. IF WITH INITIAL STATEMENT
+// 2. BOOLEAN SHORTHAND
+// ==========================================
+
+// Booleans don't need to be compared to true/false explicitly.
+// if ok       is the same as    if ok == true
+// if !ok      is the same as    if ok == false
+
+// Go way:
+if ok {
+	fmt.Println("success")
+}
+
+// Negation:
+if !ok {
+	fmt.Println("something went wrong")
+}
+
+// ==========================================
+// 3. IF WITH INITIAL STATEMENT
 // ==========================================
 
 // Syntax: if INITIAL_STATEMENT; CONDITION { }
@@ -94,7 +112,7 @@ if length := len(email); length < 10 {
 // 'length' no longer exists in memory after this block!
 
 // ==========================================
-// 3. SWITCH STATEMENTS
+// 4. SWITCH STATEMENTS
 // ==========================================
 
 // Cleaner alternative to long if-else chains for exact matches.
@@ -771,7 +789,7 @@ func fizzbuzz() {
 
 // Arrays have a fixed length set at declaration. Rarely used directly.
 var myInts [10]int                     // Array of 10 integers (all zero-valued)
-primes := [6]int{2, 3, 5, 7, 11, 13}  // Initialized literal
+primes := [6]int{2, 3, 5, 7, 11, 13}   // Initialized literal
 
 // ==========================================
 // 2. SLICES (Dynamic Size)
@@ -813,6 +831,11 @@ slice = append(slice, oneThing)
 slice = append(slice, firstThing, secondThing)
 slice = append(slice, anotherSlice...) // Spread a slice into append
 
+// WARNING: append() modifies the underlying array AND returns a new slice.
+// ALWAYS append a slice to ITSELF. Never append to a different slice variable.
+someSlice = append(otherSlice, element) // DON'T do this!
+someSlice = append(someSlice, element)  // DO this.
+
 // Example: Filter costs by day, appending matches to a new slice
 type cost struct {
 	day   int
@@ -850,7 +873,29 @@ func indexOfFirstBadWord(msg []string, badWords []string) int {
 }
 
 // ==========================================
-// 5. VARIADIC FUNCTIONS & SPREAD
+// 5. SLICE OF SLICES (2D Slices / Matrices)
+// ==========================================
+
+// Declare and build a 2D slice by appending rows:
+rows := [][]int{}
+rows = append(rows, []int{1, 2, 3})
+rows = append(rows, []int{4, 5, 6})
+// [[1 2 3] [4 5 6]]
+
+// Or build one programmatically with make:
+func createMatrix(rows, cols int) [][]int {
+	matrix := make([][]int, rows)
+	for i := 0; i < rows; i++ {
+		matrix[i] = make([]int, cols) // Use = not := (matrix[i] already exists)
+		for j := 0; j < cols; j++ {
+			matrix[i][j] = i * j
+		}
+	}
+	return matrix
+}
+
+// ==========================================
+// 6. VARIADIC FUNCTIONS & SPREAD
 // ==========================================
 
 // Variadic: Accept any number of final arguments using ... in the signature.
@@ -875,7 +920,7 @@ func main() {
 }
 
 // ==========================================
-// 6. PRACTICAL EXAMPLE
+// 7. PRACTICAL EXAMPLES
 // ==========================================
 
 // Create a slice of costs from a slice of messages
@@ -888,27 +933,185 @@ func getMessageCosts(messages []string) []float64 {
 	return messageCosts
 }
 
-// Slice of Slices -- effectively creating a matrix
-rows := [][]int{} // declare 2D slice
-rows = append(rows, []int{1, 2, 3})
-rows = append(rows, []int{4, 5, 6})
-fmt.Println(rows)
-// [[1 2 3] [4 5 6]]
-
-// example
-func createMatrix(rows, cols int) [][]int {
-	// 1. Declare as a 2D slice ([][]int)
-	matrix := make([][]int, rows)
-	for i := 0; i < rows; i++ {
-		// 2. Use standard assignment (=) instead of short declaration (:=)
-		matrix[i] = make([]int, cols)
-		for j := 0; j < cols; j++ {
-			matrix[i][j] = i * j
+// Iterating through a string for password validation
+func isValidPassword(password string) bool {
+	uppercaseCount := 0
+	digitCount := 0
+	for i := 0; i < len(password); i++ {
+		char := password[i]
+		if char >= 'A' && char <= 'Z' {
+			uppercaseCount++
+		} else if char >= '0' && char <= '9' {
+			digitCount++
 		}
-	}	
-	return matrix
+	}
+	return len(password) >= 5 && len(password) <= 12 && uppercaseCount > 0 && digitCount > 0
 }
 
-// tricky slices -- The append() function changes the underlying array of its parameter AND returns a new slice. Ussing append on anything other than itself is a BAD idea.
-someSlice = append(otherSlice, element) // don't do this
+// Tagging and filtering messages using slices, structs, and first-class functions
+type sms struct {
+	id      string
+	content string
+	tags    []string
+}
+
+func tagMessages(messages []sms, tagger func(sms) []string) []sms {
+	for i := 0; i < len(messages); i++ {
+		messages[i].tags = tagger(messages[i])
+	}
+	return messages
+}
+
+func tagger(msg sms) []string {
+	tags := []string{}
+	lowerContent := strings.ToLower(msg.content)
+
+	if strings.Contains(lowerContent, "urgent") {
+		tags = append(tags, "Urgent")
+	}
+	if strings.Contains(lowerContent, "sale") {
+		tags = append(tags, "Promo")
+	}
+	return tags
+}
+```
+#### Maps
+```go
+// ==========================================
+// 1. CREATING MAPS
+// ==========================================
+
+// Maps provide key -> value mapping. Zero value of a map is nil.
+
+// Using make():
+ages := make(map[string]int)
+ages["John"] = 37
+ages["Mary"] = 24
+ages["Mary"] = 21 // Overwrites 24
+
+// Using a literal:
+ages := map[string]int{
+	"John": 37,
+	"Mary": 21,
+}
+
+// ==========================================
+// 2. MUTATIONS
+// ==========================================
+
+m[key] = elem         // Insert or update
+elem = m[key]         // Get (returns zero value if key missing)
+delete(m, key)        // Delete
+elem, ok := m[key]    // Check existence (ok = true if found)
+
+// ==========================================
+// 3. KEY TYPES
+// ==========================================
+
+// Values can be any type. Keys must be comparable:
+// boolean, numeric, string, pointer, channel, interface, struct, array
+// NOT: slices, maps, or functions
+
+// ==========================================
+// 4. COMMA-OK PATTERN
+// ==========================================
+
+// Combine existence check with if-initial-statement (the "Go Way").
+// Ties directly into the conditional pattern from the Conditionals section.
+
+names := map[string]int{}
+missingNames := []string{}
+
+if _, ok := names["Denna"]; !ok {
+	missingNames = append(missingNames, "Denna")
+}
+
+// Example: Delete a user only if they exist and are scheduled for deletion
+func deleteIfNecessary(users map[string]user, name string) (deleted bool, err error) {
+	user, ok := users[name]
+	if !ok {
+		return false, errors.New("not found")
+	}
+	if !user.scheduledForDeletion {
+		return false, nil
+	}
+	delete(users, name)
+	return true, nil
+}
+
+// Example: Increment counts only for valid users
+func updateCounts(messagedUsers []string, validUsers map[string]int) {
+	for _, name := range messagedUsers {
+		if _, ok := validUsers[name]; ok {
+			validUsers[name]++
+		}
+	}
+}
+
+// ==========================================
+// 5. NESTED MAPS
+// ==========================================
+
+// Maps can contain maps. You must initialize inner maps before using them!
+// map[string]map[string]int
+// map[rune]map[string]int
+
+// Example: Group name counts by first letter
+func getNameCounts(names []string) map[rune]map[string]int {
+	nameCounts := make(map[rune]map[string]int)
+	for _, name := range names {
+		firstLetter := []rune(name)[0]
+
+		if _, ok := nameCounts[firstLetter]; !ok {
+			nameCounts[firstLetter] = make(map[string]int) // Init inner map!
+		}
+		nameCounts[firstLetter][name]++
+	}
+	return nameCounts
+}
+
+// ==========================================
+// 6. SETS (Using Empty Structs)
+// ==========================================
+
+// Go has no set type. Use a map with empty struct values (0 bytes each).
+// Ties back to empty structs from the Structs section.
+
+func countDistinctWords(messages []string) int {
+	distinctWords := make(map[string]struct{})
+	for _, message := range messages {
+		for _, word := range strings.Fields(strings.ToLower(message)) {
+			distinctWords[word] = struct{}{} // Zero-byte value, just marks presence
+		}
+	}
+	return len(distinctWords)
+}
+
+// ==========================================
+// 7. PRACTICAL EXAMPLE
+// ==========================================
+
+// Map names to phone numbers from two parallel slices
+type user struct {
+	name        string
+	phoneNumber int
+}
+
+func getUserMap(names []string, phoneNumbers []int) (map[string]user, error) {
+	if len(names) != len(phoneNumbers) {
+		return nil, errors.New("invalid sizes")
+	}
+	users := make(map[string]user)
+	for i := 0; i < len(names); i++ {
+		users[names[i]] = user{
+			name:        names[i],
+			phoneNumber: phoneNumbers[i],
+		}
+	}
+	return users, nil
+}
+```
+#### Pointers
+```go
+
 ```

