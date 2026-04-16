@@ -16,7 +16,6 @@ enum4linux-ng -P <ip>
 ldapsearch -h <ip> -x -b "DC=<DOMAIN>,DC=LOCAL" -s sub "*" | grep -m 1 -B 10 pwdHistoryLength
 
 ```
-
 #### Password Policy Enumeration from Windows
 ```cmd
 # Null Session

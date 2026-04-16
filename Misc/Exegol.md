@@ -2,11 +2,27 @@ Installation - https://exegol.com/install
 
 This if for me working from Ubuntu WSL. Note I only have access to the free image.
 
+GPU Passthrough - https://github.com/p3ta00/exegol-gpu
+```bash
+# From WSL
+git clone https://github.com/p3ta00/exegol-gpu.git
+cd exegol-gpu
+./install-gpu.sh
+
+# Verify inside container
+gpu-check     # clinfo + hashcat device info
+gpu-test      # hashcat MD5 benchmark
+gpu-info      # nvidia-smi
+gpu-watch     # live nvidia-smi monitor
+```
+
 Exegol Usage
 ```bash
-# HTB One-Liner Setup
-exegol start <name> --desktop --vpn </mnt/c/path/htb.ovpn> -V /path/on/host/:/path/in/container
+# HTB Setup
+source /home/ubuntu/.bashrc # for gpu passthrough
+exegol start <name> --desktop --vpn </mnt/c/path/htb.ovpn> -V /path/on/host/:/path/in/container [--gpu]
 	# -V : mount point
+	# --gpu : gpu passthrough (If you installed exegol-gpu)
 	# Once setup, you can just run this to start it in others panes/tabs
 	exegol start inquisitor
 

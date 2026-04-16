@@ -1,3 +1,5 @@
+This is a mess tbh but still is useful so its STAYING.
+
 Can begin performing these whenever you have a domain joined computer
 ```
 Remember when attempting to authenticate to devices to specify the DOMAIN\User if using a domain account

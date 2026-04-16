@@ -1,49 +1,31 @@
-ALWAYS CHECK ANONYMOUS AUTH
+Anonymous Auth — Always Check First
+	Try both `anonymous` with a blank password AND `anonymous:anonymous`.
+	Password spray with `auxiliary/scanner/ftp/ftp_login` or Netexec (use a USER_PASS file).
 
-Password Spraying? Use auxiliary/scanner/ftp/ftp_login or Netexec
-	ftp_login is more useful if you have a USER_PASS list in 1 file
+Tips
+	**Active mode** (`-A`) — sometimes required to auth or transfer files
+	**Binary mode** (`binary`) — always use when transferring sensitive files (e.g. `.kdbx`) to prevent corruption
+		The alternative is ASCII mode, which translates line endings (`\r\n` ↔ `\n`) during transfer. Breaks binaries 
+	**Write access?** Upload reverse shells to web root or FTP root. IIS → target the `iisstart.htm` directory
+	**Extra perms needed?** Try `admin:admin`, `Admin:Admin`, `<User>:<User>`, or any creds already found
+	**Metadata** — run `exiftool`, `strings` on every file that seems out of place, check author fields and hidden properties
 
-#### Usage:
+Usage
 ```bash
-ftp <ip>
+# Authentication
+ftp <ip> [-A]                         # connect
+	# anonymous :                     # blank password
+	# anonymous : anonymous           # try both
+	# -A : Active mode
 
-# anonymous auth
-creds
-	anonymous :
-	anonymous : anonymous    # check both blank pass AND anonymous:anonymous
+# Binary mode
+binary   # For senstive transfers (db, etc...)
 
-# acvive mode     sometimes necessary to auth, transfer files, etc...
--A
+# Download all
+mget *   # download all files (skips directories)
+wget -m --user=<user> --password=<pass> ftp://<ip>  # recursive download
 
-# binary mode
-binary
-
-# upload files
-put <file>
+# Some quick static analysis post-exfil
+exiftool <file>   # check metadata / author fields
+strings <file>
 ```
-
-Need extra perms to do anything?
-	try default creds
-		admin:admin
-		Admin:Admin
-	`<User>:<User>`
-	Any cred combos you have already found, etc
-
-#### Download Files
-```bash
-# all files (fails directories)
-mget *
-
-# ALL files
-wget -m --user=username --password=password ftp://ip:port
-```
-
-able to put files?
-	great!
-	consider uploading reverse shells in webroot OR ftp root 
-		iis? put in iisstart.htm directory
-
-Any files that seem to be useless? Check their properties ie author fields
-	`exiftool <file>
-	do this for ALL files you find that seem out of place
-
