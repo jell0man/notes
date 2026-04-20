@@ -3,6 +3,46 @@ Install Go
 curl -sS https://webi.sh/golang | sh
 source ~/.config/envman/PATH.env
 ```
+#### Proverbs
+```
+Don't communicate by sharing memory, share memory by communicating.
+
+Concurrency is not parallelism.
+
+Channels orchestrate; mutexes serialize.
+
+The bigger the interface, the weaker the abstraction.
+
+Make the zero value useful.
+
+interface{} says nothing.
+
+Gofmt's style is no one's favorite, yet gofmt is everyone's favorite.
+
+A little copying is better than a little dependency.
+
+Syscall must always be guarded with build tags.
+
+Cgo must always be guarded with build tags.
+
+Cgo is not Go.
+
+With the unsafe package there are no guarantees.
+
+Clear is better than clever.
+
+Reflection is never clear.
+
+Errors are values.
+
+Don't just check errors, handle them gracefully.
+
+Design the architecture, name the components, document the details.
+
+Documentation is for users.
+
+Don't panic.
+```
 #### Variables
 ```go
 // ==========================================
@@ -764,7 +804,48 @@ func printPrimes(max int) {
 }
 
 // ==========================================
-// 4. FIZZBUZZ (CLASSIC EXAMPLE)
+// 4. RANGE
+// ==========================================
+
+// range lets you iterate over slices, maps, strings, and channels
+// without managing an index manually.
+
+// Over a slice — gives you (index, value):
+for i, val := range mySlice {
+	fmt.Printf("index: %d, value: %v\n", i, val)
+}
+
+// Don't need the index? Use blank identifier:
+for _, val := range mySlice {
+	fmt.Println(val)
+}
+
+// Don't need the value? Just use the index:
+for i := range mySlice {
+	fmt.Println(i)
+}
+
+// Over a map — gives you (key, value):
+for key, value := range myMap {
+	fmt.Printf("%s: %v\n", key, value)
+}
+
+// Over a string — gives you (index, rune):
+for i, ch := range "hello" {
+	fmt.Printf("index: %d, char: %c\n", i, ch)
+}
+
+// Example: Load emails into a buffered channel
+func addEmailsToQueue(emails []string) chan string {
+	emailsToSend := make(chan string, len(emails))
+	for _, email := range emails {
+		emailsToSend <- email
+	}
+	return emailsToSend
+}
+
+// ==========================================
+// 5. FIZZBUZZ (CLASSIC EXAMPLE)
 // ==========================================
 
 func fizzbuzz() {
@@ -1391,3 +1472,415 @@ func main() {
 // 4. Packages shouldn't know about dependents — no references to the apps that use them.
 ```
 #### Concurrency
+```go
+// ==========================================
+// WHAT'S A CHANNEL?
+// ==========================================
+
+// A channel is just a pipe between goroutines.
+// One goroutine shoves values in one end, another pulls them out the other.
+//
+//  goroutine A ─── ch <- 42 ──>  [  CHANNEL  ]  ──> v := <-ch  ── goroutine B
+//
+
+// ==========================================
+// 1. GOROUTINES
+// ==========================================
+
+// Concurrency = multiple tasks making progress at the same time.
+// A goroutine is a lightweight concurrent "thread" managed by the Go runtime.
+// Launch one by putting 'go' in front of a function call.
+
+go doSomething()
+
+// Example: "Email sent" prints BEFORE "Email received" because the
+// anonymous goroutine runs concurrently with a 250ms delay.
+func sendEmail(message string) {
+	go func() {
+		time.Sleep(time.Millisecond * 250)
+		fmt.Printf("Email received: '%s'\n", message)
+	}()
+	fmt.Printf("Email sent: '%s'\n", message)
+}
+
+// ==========================================
+// 2. CHANNELS
+// ==========================================
+
+// Channels are typed, thread-safe queues that let goroutines talk to each other.
+// One goroutine shoves values in, another pulls them out. FIFO.
+// They are reference types (like maps and slices).
+
+ch := make(chan int) // Create a channel that carries ints
+
+// The <- operator sends and receives. Data flows in the direction of the arrow.
+ch <- 69     // Send 69 into the channel
+v := <-ch    // Receive a value from the channel into v
+
+// Both send and receive BLOCK until the other side is ready.
+
+// Example: Send from a goroutine, receive in main
+func send(ch chan int) {
+	ch <- 99
+}
+func main() {
+	ch := make(chan int)
+	go send(ch)
+	fmt.Println(<-ch) // 99
+}
+
+// ==========================================
+// 3. BUFFERED CHANNELS
+// ==========================================
+
+// Pass a capacity as the second argument to make().
+// Sends don't block until the buffer is full.
+// Receives don't block until the buffer is empty.
+
+ch := make(chan int, 100) // Buffer holds 100 values before sending blocks
+
+// Example: Pre-load a work queue for other goroutines to consume
+func addEmailsToQueue(emails []string) chan string {
+	emailChannel := make(chan string, len(emails))
+	for i := 0; i < len(emails); i++ {
+		emailChannel <- emails[i]
+	}
+	return emailChannel
+}
+
+// ==========================================
+// 4. CLOSING CHANNELS
+// ==========================================
+
+// Only SENDERS close channels. Sending on a closed channel = panic!
+ch := make(chan int)
+close(ch)
+
+// Check if a channel is closed with comma-ok:
+v, ok := <-ch // ok = false if channel is empty AND closed
+
+// Receive from a closed channel returns the zero value immediately:
+var ch = make(chan int, 100)
+close(ch)
+fmt.Println(<-ch) // 0
+
+// ==========================================
+// 5. RANGING OVER CHANNELS
+// ==========================================
+
+// range on a channel blocks until each value arrives, stops when channel closes.
+for item := range ch {
+	// item is the next value received from the channel
+}
+
+// Example: Generate fibonacci numbers concurrently
+func concurrentFib(n int) []int {
+	intChan := make(chan int)
+	fibSlice := []int{}
+
+	go fibonacci(n, intChan) // Generate in a separate goroutine
+
+	for item := range intChan { // Blocks until channel closes
+		fibSlice = append(fibSlice, item)
+	}
+	return fibSlice
+}
+
+func fibonacci(n int, ch chan int) {
+	x, y := 0, 1
+	for i := 0; i < n; i++ {
+		ch <- x
+		x, y = y, x+y
+	}
+	close(ch) // Signals to receiver that generation is done
+}
+
+// ==========================================
+// 6. SELECT
+// ==========================================
+
+// Listen to multiple channels at once. Like a switch but for channels.
+// The first channel with a value ready fires. If multiple are ready, one is chosen randomly.
+
+select {
+case i, ok := <-chInts:
+	if ok {
+		fmt.Println(i)
+	}
+case s, ok := <-chStrings:
+	if ok {
+		fmt.Println(s)
+	}
+}
+
+// Example: Log messages from two channels until one closes
+func logMessages(chEmails, chSms chan string) {
+	for {
+		select {
+		case email, ok := <-chEmails:
+			if !ok {
+				return
+			}
+			logEmail(email)
+		case sms, ok := <-chSms:
+			if !ok {
+				return
+			}
+			logSms(sms)
+		}
+	}
+}
+
+// Default Case: Runs immediately if no channel is ready. Prevents blocking.
+select {
+case v := <-ch:
+	// use v
+default:
+	// receiving from ch would block, do something else
+}
+
+// Ignoring the value — just care that something arrived:
+select {
+case <-ch:
+	// event received, value discarded
+default:
+	// nothing ready
+}
+
+// ==========================================
+// 7. DIRECTIONAL CHANNELS
+// ==========================================
+
+// Restrict a channel to read-only or write-only in a function signature.
+// Catches misuse at compile time.
+
+func readOnly(ch <-chan int) {
+	// Can only receive from ch
+}
+
+func writeOnly(ch chan<- int) {
+	// Can only send to ch
+}
+
+// ==========================================
+// 8. TIME UTILITIES
+// ==========================================
+
+time.Sleep(500 * time.Millisecond) // Block current goroutine for a duration
+time.Tick(500 * time.Millisecond)  // Returns a channel that sends on an interval
+time.After(2 * time.Second)        // Returns a channel that sends once after a delay
+
+// ==========================================
+// 9. NIL & CLOSED CHANNEL GOTCHAS
+// ==========================================
+
+// A declared but uninitialized channel is nil (just like slices):
+var ch chan string // ch is nil
+
+// Send to nil channel    → blocks forever
+// Receive from nil channel → blocks forever
+// Send to closed channel  → PANIC
+// Receive from closed channel → returns zero value immediately
+```
+#### Mutexes
+```go
+// ==========================================
+// 1. WHAT'S A MUTEX?
+// ==========================================
+
+// Mutex = "mutual exclusion".
+// It locks shared data so only one goroutine can access it at a time.
+// Without it, concurrent goroutines reading/writing the same data = race condition.
+
+sync.Mutex // The type
+mu.Lock()  // Lock — blocks if already locked by another goroutine
+mu.Unlock() // Unlock — lets the next goroutine in
+
+// Best practice: Use defer to guarantee the unlock always happens.
+func protected() {
+	mu.Lock()
+	defer mu.Unlock()
+	// Everything below is protected.
+	// Any other call to mu.Lock() will block until this function returns.
+}
+
+// ==========================================
+// 2. PROTECTING SHARED DATA
+// ==========================================
+
+// Maps are NOT thread-safe. Concurrent reads/writes without a mutex = crash.
+// Embed a mutex in your struct to protect access.
+
+type safeCounter struct {
+	counts map[string]int
+	mu     *sync.Mutex
+}
+
+func (sc safeCounter) inc(key string) {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+	sc.slowIncrement(key)
+}
+
+func (sc safeCounter) val(key string) int {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+	return sc.slowVal(key)
+}
+
+// ==========================================
+// 3. RW MUTEX (Read/Write Mutex)
+// ==========================================
+
+// sync.RWMutex — optimized for read-heavy workloads.
+// Writers: Only 1 at a time (exclusive lock, same as regular mutex).
+// Readers: Unlimited at the same time (shared lock, much faster).
+
+sync.RWMutex // The type
+mu.RLock()   // Read-lock — multiple goroutines can hold this simultaneously
+mu.RUnlock() // Read-unlock
+
+// Use RLock/RUnlock for methods that only READ:
+func (sc safeCounter) val(key string) int {
+	sc.mu.RLock()
+	defer sc.mu.RUnlock()
+	return sc.counts[key]
+}
+
+// Use Lock/Unlock for methods that WRITE:
+func (sc safeCounter) inc(key string) {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+	sc.counts[key]++
+}
+```
+#### Generics
+```go
+// ==========================================
+// 1. TYPE PARAMETERS
+// ==========================================
+
+// Go has no classes, making code reuse kinda inconvenient.
+// Generics (Go 1.18+) let you use variables to refer to specific types.
+// Took forever because Go is meant to be simplistic...
+
+// T is the type parameter. 'any' means it accepts all types.
+func splitAnySlice[T any](s []T) ([]T, []T) {
+	mid := len(s) / 2
+	return s[:mid], s[mid:]
+}
+
+// Example: Get the last item from any slice
+func getLast[T any](s []T) T {
+	var zero T
+	if len(s) == 0 {
+		return zero // Return the zero value of whatever T is
+	}
+	return s[len(s)-1]
+}
+
+// Generics reduce repetitive code.
+// Used more often in libraries and packages than application code.
+// Naming: T is convention, but any name works.
+
+// ==========================================
+// 2. CONSTRAINTS
+// ==========================================
+
+// Sometimes your generic function needs to DO something with the type
+// (not just pass it around). Constraints restrict which types are allowed.
+
+// Custom constraint using an interface:
+type stringer interface {
+	String() string
+}
+
+func concat[T stringer](vals []T) string {
+	result := ""
+	for _, val := range vals {
+		result += val.String() // Only works because stringer guarantees .String()
+	}
+	return result
+}
+
+// ==========================================
+// 3. TYPE LISTS (Type-Set Interfaces)
+// ==========================================
+
+// Instead of listing methods, list the concrete types that are allowed.
+// Uses the ~ operator to include types with the same underlying type.
+
+// Ordered matches any type that supports <, <=, >, >=
+type Ordered interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64 |
+		~string
+}
+
+// Because T is constrained by Ordered, the compiler knows < is valid.
+func Min[T Ordered](a, b T) T {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// ==========================================
+// 4. PARAMETRIC CONSTRAINTS
+// ==========================================
+
+// Constraint interfaces can accept type parameters too.
+type biller[C customer] interface {
+	Charge(C) bill
+	Name() string
+}
+```
+#### Enums
+```go
+// ==========================================
+// 1. IOTA (Pseudo-Enums)
+// ==========================================
+
+// Go has no real enums, sum types, or tagged unions.
+// The type system is more C than Rust — simplicity over expressiveness.
+// Iota is the closest thing. If you squint really hard, it kinda looks like an enum.
+
+type sendingChannel int
+
+const (
+	Email sendingChannel = iota // 0
+	SMS                         // 1
+	Phone                       // 2
+)
+
+// Iota auto-increments starting at 0 for each constant in a const block.
+// But there's no exhaustiveness check — nothing stops you from assigning
+// any random int to a sendingChannel. It's convention, not enforcement.
+
+// ==========================================
+// 2. ERROR WRAPPING
+// ==========================================
+
+// Errors are just values. Wrap them with fmt.Errorf and %w to add context
+// as they bubble up the call stack. This builds a chain you can inspect later.
+
+user, err := getUser()
+if err != nil {
+	return fmt.Errorf("failed to get user: %w", err)
+}
+
+// The developer CAN just ignore the error and use the data anyway,
+// even if it's invalid (probably nil or empty struct). Don't be that guy.
+
+// Pattern: Check each step, wrap and return immediately on failure.
+func (a *analytics) handleEmailBounce(em email) error {
+	if err := em.recipient.updateStatus(em.status); err != nil {
+		return fmt.Errorf("error updating user status: %w", err)
+	}
+	if err := a.track(em.status); err != nil {
+		return fmt.Errorf("error tracking user bounce: %w", err)
+	}
+	return nil
+}
+```

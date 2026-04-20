@@ -125,7 +125,7 @@ Content-Type: image/jpg   # might need to google for special types
 Data: <shell>
 ```
 
-MIME-TYPE -- see [[Magic Numbers Cheatsheet]]
+MIME-TYPE -- see [[Magic Bytes Cheatsheet]]
 ```bash
 # Intercept Burp upload request and modify
 filename=shell.php

@@ -230,7 +230,9 @@ place ports and findings here...
     - [ ] URL Parameters: `?view=`, `?page=`, `?include=`
         
     - [ ] Test: `../../../../etc/passwd`
-	    
+		
+	- [ ] Test basic encoding like `....//....//....//....//etc/passwd`
+		
 - [ ] **Enumeration:**
     
     - [ ] Manual Traversal (config files, /etc/passwd, ssh keys, etc...)
