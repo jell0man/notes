@@ -20,11 +20,19 @@ Exegol Usage
 ```bash
 # HTB Setup
 source /home/ubuntu/.bashrc # for gpu passthrough
+
+cat >> /path/to/openvpn_file << 'EOF'
+
+script-security 2
+up /etc/openvpn/update-resolv-conf
+down /etc/openvpn/update-resolv-conf
+EOF
+
 exegol start <name> --desktop --vpn </mnt/c/path/htb.ovpn> -V /path/on/host/:/path/in/container [--gpu]
 	# -V : mount point
 	# --gpu : gpu passthrough (If you installed exegol-gpu)
 	# Once setup, you can just run this to start it in others panes/tabs
-	exegol start inquisitor
+	exegol start <name>
 
 # Exit exegol shell
 exit
@@ -70,6 +78,13 @@ exegol exec <container OR image> <command> [command...]
 
 # Get container info
 exegol info [container_name]
+```
+
+VPN Troubleshooting
+```bash
+# If VPN craps out and need to replace, here is a quick fix
+cp /path/to/file.ovpn ~/.exegol/workspaces/<container>/   # From WSL
+openvpn --config /workspace/file.ovpn --daemon            # From Exegol
 ```
 
 [[Windows Terminal]] (for quick reference :))

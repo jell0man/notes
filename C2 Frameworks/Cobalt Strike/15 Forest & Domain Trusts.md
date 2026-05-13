@@ -6,7 +6,8 @@ Cheat sheet
 beacon> ldapsearch (objectClass=trustedDomain) --attributes trustPartner,trustDirection,trustAttributes,flatName
 	# TrustDirection = 1 -> proceed to One-Way Inbound Trusts
 	# TrustDirection = 2 -> proceed to One-Way Outbound Trusts
-	# TrustDirection = 3 -> proceed to Parent-Child Tickets
+	# TrustDirection = 3 -> proceed to Parent-Child Tickets (bidirectional)
+		# NOTE:trustAttributes = 32 is also required for Parent-Child (Same-Forest)
 ```
 
 Trust Summary

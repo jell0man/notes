@@ -1,6 +1,8 @@
 #### Step 1
 When exposed to an internal network, ping sweeps may be used to identify hosts
 
+NOTE: `Don't forget that some hosts do not respond to icmp packets...`
+
 Attempt twice!!!
 
 ```bash

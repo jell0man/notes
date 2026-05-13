@@ -283,6 +283,8 @@ This gives an ongoing list of file-type magic numbers
 `25 50 44 46 2D 	%PDF-<version> 	0 	pdf 	PDF document[36]
 	example:
 		`%PDF-1.3`
+	Content Type: `application/pdf
+
 
 WAV
 	MIME / Content Type : `video/x-ms-wmv`

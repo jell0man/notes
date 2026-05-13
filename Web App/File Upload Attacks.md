@@ -4,6 +4,8 @@ If web page is missing validation, you can just upload a web shell, backdoor, re
 it to obtain a shell. See [[Web Shells]] and [[Methodology/Shells/Reverse Shells|Reverse Shells]]
 
 Consider chaining with Responder to capture a hash upon a user clicking (if reverse shells fail)
+## Phishing
+Assuming users will interact with uploaded files, you can set up a responder server and upload a malicious file. See [[BadPDF]]F as an example.
 ## Bypassing Filters
 Many web apps use methods to validate file format prior to upload. There are methods to bypass this
 

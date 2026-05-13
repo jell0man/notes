@@ -41,6 +41,12 @@ LaZagne
 ```
 .\LaZagne.exe all
 ```
+
+Browser Creds
+```
+If you see any of these in winpeas output, I reccomend a meterpreter module, like post/windows/gather/enum_browsers
+```
+
 ## Linux
 ```bash
 # conf files

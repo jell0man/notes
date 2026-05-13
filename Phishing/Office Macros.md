@@ -1,7 +1,8 @@
 A premade resume.odt file is saved in documents that catches a reverse shell over port 80
 
-To create a new one:
+I believe this can be automated with the Metasploit auxiliary/fileformat/odt_badodt module, but need to test.
 
+To create a new one:
 #### Step 1:
 Save this PoC as a .py file
 	swap out rev shell as needed (generate one online)
