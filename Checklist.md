@@ -467,7 +467,7 @@ PtC
 [[AD Recycle Bin]]
 	-
 
-Domain Dominance [[14 Domain Dominance]]
+Domain Dominance [[Notes/Command & Control/Cobalt Strike/14 Domain Dominance]]
 	DCSync
 		-
 	Ticket Forgery
@@ -625,7 +625,7 @@ Path Interception
 	Unquoted Service Paths `# Remove 'auto' filters if we can start/stop services`
 		CMD `# wmic service get name,pathname,startmode | findstr /i "auto" | findstr /i /v "C:\Windows\\" | findstr /i /v """`
 			-
-		PowerShell `# Get-CimInstance -ClassName Win32_Service | Where-Object { $_.PathName -notlike '"*' and $_.StartMode -eq 'Auto' -and $_.PathName -like '* *' -and $_.PathName -notlike 'C:\Windows\*'} | Select-Object Name, PathName`
+		PowerShell `# Get-CimInstance -ClassName Win32_Service | Where-Object { $_.PathName -notlike '"*' -and $_.StartMode -eq 'Auto' -and $_.PathName -like '* *' -and $_.PathName -notlike 'C:\Windows\*'} | Select-Object Name, PathName`
 			-
 		Manually Check (Look at Installed Apps and probe)
 			-
@@ -1360,7 +1360,7 @@ PtT
 PtC
 	-
 
-Domain Dominance [[14 Domain Dominance]]
+Domain Dominance [[Notes/Command & Control/Cobalt Strike/14 Domain Dominance]]
 	DCSync
 		-
 	Ticket Forgery

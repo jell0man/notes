@@ -41,10 +41,10 @@ Invoke-BloodHound -CollectionMethod All -OutputDirectory
 
 Bloodhound-python (ldap)
 ```bash
-bloodhound-python -c All -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' [-k] -ns 10.80.80.2 [--zip]
+bloodhound-python -c All -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' [-k -no-pass] -ns 10.80.80.2 [--zip]
 
 # via proxy
-proxychains -q bloodhound-python -c All -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' [-k] -ns 10.80.80.2 --dns-tcp
+proxychains -q bloodhound-python -c All -d 'ad.lab' -u 'john.doe' -p 'P@$$word123!' [-k -no-pass] -ns 10.80.80.2 --dns-tcp
 ```
 
 #### Analysis

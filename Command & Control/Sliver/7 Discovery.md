@@ -39,6 +39,10 @@ sliver> execute-assembly /path/to/SharpView.exe "get-domainuser -PreauthNotRequi
 sliver > execute-assembly /path/to/SharpView.exe "get-domain" -t 240 -i -E -M 
 ```
 
+Armory Module Version
+```bash
+sliver > sharpview -t 120 -- <powerview command>
+```
 ## Misc
 Sliver contains various coff loaders from [Outflank](https://github.com/sliverarmory/C2-Tool-Collection ) ported over as BOFs
 

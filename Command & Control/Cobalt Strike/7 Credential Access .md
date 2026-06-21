@@ -80,7 +80,7 @@ Notes:
 			`.\hashcat.exe -a 0 -m 2100 .\mscachev2.hash .\example.dict -r .\rules\dive.rule`
 
 ## Kerberos Tickets
-See [[12 Kerberos]] or AD Attacks and for more in depth understanding of protocol and abuse.
+See [[Notes/Command & Control/Cobalt Strike/12 Kerberos]] or AD Attacks and for more in depth understanding of protocol and abuse.
 #### AS-REP Roasting
 OPSEC NOTE:
 	Most detection strategies are geared towards looking at unusual or anomalous ticket requests.  Each AS-REP generates a 4768 event. Rubeus also requests RC4-encrypted tickets by default because they are easier to crack.  However, since modern versions of Windows uses AES128 and 256, the use of RC4 tickets can stand out.

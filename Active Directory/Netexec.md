@@ -1,6 +1,6 @@
 https://www.netexec.wiki
 
-NOTE: Pwn3d! means code exec and RDP possible.
+>[!note] NOTE: Pwn3d! means code exec and RDP possible.
 ## General Usage
 
 ```bash

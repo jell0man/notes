@@ -36,26 +36,36 @@ Sliver:
   close              Close an interactive session without killing the remote process
   download           Download a file
   execute            Execute a program on the remote system
+	  execute -o powershell.exe -Command "cmds..."
   execute-shellcode  Executes the given shellcode in the sliver process
   extensions         Manage extensions
   beacons            List beacons and status
   sessions           List interactive sessions and their states
   interactive        Convert beacon -> Session
   tasks              Check status of tasks pending for beacons to execute
+  shell              Drop to interactive shell. WORST OPSEC.!!!
 <SNIP>
 ```
 
 ## Tools
 Sliver offers lots of cool functionality, including `download`, `upload`, and `execute-assembly`. 
 
-`execute-assembly` allows us to run .NET binaries on the target machine, without uploading them. However, one caveat that `execute-assembly` has is it will spawn a child process.
+`execute-assembly` allows us to run .NET binaries on the target machine, without uploading them. However, one caveat that `execute-assembly` has is it will spawn a child process. 
+
+`inline-execute-assembly` allows the same, but does NOT spawn a sacrificial process. Instead, the assembly is run WITHIN beacon process. Better OPSEC, but if there are issues, the beacon can fail. Armory extension.
 
 > **OPSEC NOTE:** By default, execute-assembly will spawn a `notepad.exe` process when run with any .NET binary. Obviously not ideal. `--process` resolves this.
 
-Tool Usage
-```bash
-<tool> --help
+`<tool> --help`
 
+Upload
+```bash
+# Upload
+upload [flags] local-path [remote-path]
+```
+
+Download
+```bash
 # Download
 download [flags] remote-path [local-path]
 
@@ -66,10 +76,10 @@ download [flags] remote-path [local-path]
   #-r, --recurse             recursively download all files in a directory
   #-t, --timeout   int       command timeout in seconds (default: 60)
   #-T, --type      string    force a specific loot type (file/cred) if looting
+```
 
-# Upload
-upload [flags] local-path [remote-path]
-
+Execute-assembly (& Inline)
+```bash
 # Execute-assembly
 execute-assembly [flags] filepath [arguments...]
 
@@ -92,6 +102,3 @@ Flags
   -s, --save                        save output to file
   -t, --timeout           int       command timeout in seconds (default: 60)
 ```
-
-
-

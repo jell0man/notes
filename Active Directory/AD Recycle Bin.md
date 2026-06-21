@@ -31,3 +31,10 @@ nxc Alternative
 # Restore deleted User
 -M tombstone -o ACTION=restore ID=<ID> SCHEME=ldap
 ```
+
+bloodyAD
+```bash
+bloodyAD --host <host> -d <domain> \
+      -u <user> -p '<pass>' \
+      set restore <target_user>
+```

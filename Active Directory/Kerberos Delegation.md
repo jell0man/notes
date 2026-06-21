@@ -1,6 +1,6 @@
 The following section details methods to enumerate and abuse Kerberos and its associated delegation features. This section is NOT concerned with OPSEC or theory, but serves as a primer to abusing Kerberos via Linux and the Impacket Suite (mostly).
 
-For a detailed understanding of delegation, see [[12 Kerberos]]
+For a detailed understanding of delegation, see [[Notes/Command & Control/Cobalt Strike/12 Kerberos]]
 #### Enumeration
 ```bash
 # Enumerating -- Make note of FULL spn, including PORT

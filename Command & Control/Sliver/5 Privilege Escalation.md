@@ -10,7 +10,7 @@ Besides `Sliver`'s built-in commands, we can extend its features by adding new c
 Both execute-assembly & armory can be used to do similar stuff as shown below. Use case? We have custom .NET binaries we compiled ourself.
 
 `seatbelt` - enumerate environment
-`sharup` - enumerate privileges, registries, unquoted service paths, etc...
+`sharpup` - enumerate privileges, registries, unquoted service paths, etc...
 
 > **NOTE:** Upon executing tools, we must prepend with `--` after tool's name to let Sliver know there won't be more arguments, followed by arguments the tool supports.
 

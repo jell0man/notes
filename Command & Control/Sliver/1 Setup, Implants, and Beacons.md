@@ -42,6 +42,13 @@ kick-operator  # Kick an operator from the server
 multiplayer    # Enable multiplayer mode
 new-operator   # Create a new operator config file
 operators      # Manage operators
+
+# On server
+multiplayer --lhost <lhost> --lport <lport>
+
+# On client
+sliver-client import /path/to/.cfg
+sliver-slient
 ```
 
 ## Armory

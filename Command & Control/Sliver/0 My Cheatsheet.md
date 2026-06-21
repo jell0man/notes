@@ -34,6 +34,8 @@ extensions load [ext] # Load a specific extension into the current session
 ### EXECUTION ###
 execute [cmd]         # Run a binary on disk directly (bypasses cmd.exe)
 shell                 # Open an interactive system shell (Bad OPSEC, leaves artifacts)
+	exit
+	ctrl-d to return to normal sliver
 execute-assembly [exe]# Execute a compiled .NET assembly entirely in memory
 sideload [loc.dll]    # Inject and run a local DLL in a remote process
 [bof_name] [args]     # Execute a BOF directly (once installed via Armory)
