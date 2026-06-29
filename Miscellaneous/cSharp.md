@@ -131,7 +131,7 @@ while (count < 3) {
 }
 ```
 
-Lists (Arrays and List<T>)
+Lists (Arrays and List)
 
 ```csharp
 // Fixed-size array
@@ -164,7 +164,7 @@ if (userData.TryGetValue("shell", out var shell)) {
 }
 ```
 
-Sets (HashSet<T>)
+Sets (HashSet)
 
 ```csharp
 // Unique and unordered — perfect for deduping discovered hosts

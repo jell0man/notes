@@ -1,7 +1,26 @@
-The following are methods of persistence in order from more reliable to least reliable
+The following are some methods of persistence in order from more reliable to least reliable. It's a bit dated to be honest and I need to add to it. Until I add it here, check Command & Control for some more ideas with more explicit instructions.
 
-NOTE: These examples use a meterpreter multi/handler. You can also generate other payloads (see msfvenom notes) and use other listeners, in case you want to use `nc`
+> NOTE: These examples use a meterpreter multi/handler. You can also generate other payloads (see msfvenom notes) and use other listeners, in case you want to use `nc`
+#### To-Do
+Windows
+	Schtasks
+	Services
+	WMI Event subs
+	Startup FolderDLL Hijacking/Injection
+	Registry run keys
+	Created Users
+	Valid Users
 
+Linux
+	cronjobs
+	services
+	shell profile config
+	account key manipulation
+		ssh authorized keys
+		sudoers backdoor
+	Dynamic link hijacking
+	Created Users
+	Valid Users
 #### Scheduled Task
 Windows
 ```bash
