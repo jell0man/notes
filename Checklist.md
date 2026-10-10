@@ -447,7 +447,10 @@ Timeroast
 	-
 
 ADCS 
-	-
+	Certipy
+		-
+	ESC10 check 
+		-
 
 ACLs
 	-
